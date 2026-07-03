@@ -5,9 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [VideoEntity::class], version = 1, exportSchema = false)
+@Database(entities = [VideoEntity::class, FavoriteEntity::class], version = 3, exportSchema = false)
 abstract class VideoCacheDatabase : RoomDatabase() {
     abstract fun videoDao(): VideoDao
+    abstract fun favoriteDao(): FavoriteDao
 
     companion object {
         @Volatile
@@ -19,7 +20,10 @@ abstract class VideoCacheDatabase : RoomDatabase() {
                     context.applicationContext,
                     VideoCacheDatabase::class.java,
                     "video_cache.db",
-                ).build().also { instance = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { instance = it }
             }
         }
     }

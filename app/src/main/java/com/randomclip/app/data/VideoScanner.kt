@@ -13,6 +13,12 @@ private val VIDEO_EXTENSIONS = setOf(
     "mp4", "mkv", "webm", "avi", "mov", "m4v", "3gp", "ts", "flv", "wmv",
 )
 
+private data class VideoMetadata(
+    val durationMs: Long,
+    val width: Int,
+    val height: Int,
+)
+
 class VideoScanner(private val context: Context) {
 
     suspend fun scanFolder(folderUri: Uri): List<VideoItem> = withContext(Dispatchers.IO) {
@@ -27,12 +33,14 @@ class VideoScanner(private val context: Context) {
             if (file.isDirectory) {
                 collectVideos(file, out)
             } else if (isVideoFile(file)) {
-                val duration = readDurationMs(file.uri)
-                if (duration > 0L) {
+                val metadata = readMetadata(file.uri)
+                if (metadata.durationMs > 0L) {
                     out += VideoItem(
                         uri = file.uri,
                         displayName = file.name ?: file.uri.lastPathSegment.orEmpty(),
-                        durationMs = duration,
+                        durationMs = metadata.durationMs,
+                        width = metadata.width,
+                        height = metadata.height,
                     )
                 }
             }
@@ -50,15 +58,30 @@ class VideoScanner(private val context: Context) {
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)?.startsWith("video/") == true
     }
 
-    private fun readDurationMs(uri: Uri): Long {
+    private fun readMetadata(uri: Uri): VideoMetadata {
         val retriever = MediaMetadataRetriever()
         return try {
             retriever.setDataSource(context, uri)
-            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 ?.toLongOrNull()
                 ?: 0L
+            val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                ?.toIntOrNull()
+                ?: 0
+            val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                ?.toIntOrNull()
+                ?: 0
+            val rotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+                ?.toIntOrNull()
+                ?: 0
+            val (finalWidth, finalHeight) = if (rotation == 90 || rotation == 270) {
+                height to width
+            } else {
+                width to height
+            }
+            VideoMetadata(durationMs, finalWidth, finalHeight)
         } catch (_: Exception) {
-            0L
+            VideoMetadata(0L, 0, 0)
         } finally {
             retriever.release()
         }
