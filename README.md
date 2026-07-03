@@ -61,3 +61,4 @@ cd /home/abdul/RiderProjects/RandomClip
 - Erste Ordner-Scan kann bei vielen Videos dauern; danach werden Metadaten aus Room geladen
 - Videos werden **nicht** transkodiert — nur Seek + direkte Wiedergabe in Originalqualität
 - Bei App-Pause werden Player-Ressourcen pausiert; beim Verlassen freigegeben
+# RandomClip
