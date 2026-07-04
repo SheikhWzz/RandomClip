@@ -90,7 +90,10 @@ class MainActivity : ComponentActivity() {
                         onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
                         onToggleDisplayMode = { viewModel.toggleDisplayMode() },
                         onToggleRandomMode = { viewModel.updateRandomMode(!uiState.settings.randomMode) },
-                        onBack = { viewModel.navigateTo(Screen.DASHBOARD) },
+                        onBack = { 
+                            viewModel.exitPlaylistMode()
+                            viewModel.navigateTo(Screen.DASHBOARD) 
+                        },
                     )
                     Screen.SETTINGS -> SettingsScreen(
                         settings = uiState.settings,

@@ -89,6 +89,12 @@ fun VideoPlayerScreen(
         }
     }
 
+    // Manual trigger for play/pause feedback icon (only on tap, not on swipe)
+    var showPlayPauseFeedback by remember { mutableStateOf(false) }
+    fun triggerPlayPauseFeedback() {
+        showPlayPauseFeedback = true
+    }
+
     // Handle system back button
     BackHandler(enabled = true) {
         onBack()
@@ -117,6 +123,7 @@ fun VideoPlayerScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             playerView.player = null
+            playerManager.stopClip()
         }
     }
 
@@ -133,6 +140,7 @@ fun VideoPlayerScreen(
                             if (offset.y > screenHeight * 0.7f) {
                                 showVideoName = true
                             } else {
+                                triggerPlayPauseFeedback()
                                 onTogglePlayPause()
                             }
                         }
@@ -206,17 +214,11 @@ fun VideoPlayerScreen(
         }
 
         // Instagram-style Play/Pause feedback icon (smaller, no background)
-        var showPlayPauseFeedback by remember { mutableStateOf(false) }
-        var wasPlaying by remember { mutableStateOf(false) }
-        
-        LaunchedEffect(uiState.isPlaying) {
-            // Only show feedback on manual play/pause toggle, not on automatic clip transitions
-            if (wasPlaying != uiState.isPlaying) {
-                showPlayPauseFeedback = true
+        LaunchedEffect(showPlayPauseFeedback) {
+            if (showPlayPauseFeedback) {
                 delay(500)
                 showPlayPauseFeedback = false
             }
-            wasPlaying = uiState.isPlaying
         }
         
         AnimatedVisibility(

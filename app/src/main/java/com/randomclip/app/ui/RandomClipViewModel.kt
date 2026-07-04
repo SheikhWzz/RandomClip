@@ -155,6 +155,19 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         playFavorite(favorites[0])
     }
 
+    fun exitPlaylistMode() {
+        _uiState.update { 
+            it.copy(
+                isFavoritesPlaylistMode = false,
+                statusMessage = "Playlist-Modus verlassen"
+            ) 
+        }
+        viewModelScope.launch {
+            delay(1000)
+            _uiState.update { it.copy(statusMessage = null) }
+        }
+    }
+
     private fun playNextInFavoritesPlaylist() {
         if (!_uiState.value.isFavoritesPlaylistMode) return
         
@@ -162,6 +175,16 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         if (favorites.isEmpty()) return // Don't exit playlist mode, just do nothing
         
         favoritesPlaylistIndex = (favoritesPlaylistIndex + 1) % favorites.size
+        playFavorite(favorites[favoritesPlaylistIndex])
+    }
+
+    private fun playPreviousInFavoritesPlaylist() {
+        if (!_uiState.value.isFavoritesPlaylistMode) return
+        
+        val favorites = _uiState.value.favorites
+        if (favorites.isEmpty()) return // Don't exit playlist mode, just do nothing
+        
+        favoritesPlaylistIndex = (favoritesPlaylistIndex - 1 + favorites.size) % favorites.size
         playFavorite(favorites[favoritesPlaylistIndex])
     }
 
@@ -203,6 +226,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
                 showFavorites = false,
                 currentScreen = Screen.PLAYER,
                 isPlaying = true,
+                isFavorite = true,
                 statusMessage = video.displayName
             )
         }
@@ -280,21 +304,25 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun playPreviousClip() {
-        if (historyIndex > 0) {
-            historyIndex--
-            val selection = history[historyIndex]
-            
-            _uiState.update {
-                it.copy(
-                    currentClip = selection,
-                    awaitingManualAdvance = false,
-                    statusMessage = selection.video.displayName,
-                    isPlaying = true,
-                )
+        if (_uiState.value.isFavoritesPlaylistMode) {
+            playPreviousInFavoritesPlaylist()
+        } else {
+            if (historyIndex > 0) {
+                historyIndex--
+                val selection = history[historyIndex]
+                
+                _uiState.update {
+                    it.copy(
+                        currentClip = selection,
+                        awaitingManualAdvance = false,
+                        statusMessage = selection.video.displayName,
+                        isPlaying = true,
+                    )
+                }
+                playerManager.playClip(selection)
+                scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
+                revealOverlayControls()
             }
-            playerManager.playClip(selection)
-            scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
-            revealOverlayControls()
         }
     }
 
@@ -343,9 +371,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
                 },
             )
         }
-        if (videos.isNotEmpty() && _uiState.value.currentClip == null) {
-            playRandomClip()
-        }
+        // Don't auto-start player when loading videos - only start when user enters player screen
     }
 
     private fun playRandomClip() {
@@ -384,9 +410,13 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
             if (antiRepeatQueue.size > 15) antiRepeatQueue.removeAt(0)
         }
 
+        // Check if current video is a favorite
+        val isVideoFavorite = state.favorites.any { it.videoUri == selection.video.uri }
+
         _uiState.update {
             it.copy(
                 currentClip = selection,
+                isFavorite = isVideoFavorite,
                 awaitingManualAdvance = false,
                 statusMessage = selection.video.displayName,
                 isPlaying = true,
@@ -435,6 +465,9 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun onClipFinished() {
+        // Don't auto-advance if we're not in the player screen anymore
+        if (_uiState.value.currentScreen != Screen.PLAYER) return
+        
         if (clipTransitionInProgress) return
         clipTransitionInProgress = true
         clipTimerJob?.cancel()
