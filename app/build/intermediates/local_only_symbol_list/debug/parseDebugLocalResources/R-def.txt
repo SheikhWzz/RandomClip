@@ -1,7 +1,9 @@
 R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
+drawable ic_launcher
 drawable ic_launcher_foreground
+drawable play_button_transparent_for_haupt_menu
 mipmap ic_launcher
 string app_name
 style Theme.RandomClip

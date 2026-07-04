@@ -17,8 +17,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.randomclip.app.ui.RandomClipViewModel
+import com.randomclip.app.ui.Screen
+import com.randomclip.app.ui.screens.DashboardScreen
 import com.randomclip.app.ui.screens.FavoritesSheet
-import com.randomclip.app.ui.screens.SettingsSheet
+import com.randomclip.app.ui.screens.SettingsScreen
 import com.randomclip.app.ui.screens.VideoPlayerScreen
 import com.randomclip.app.ui.theme.RandomClipTheme
 
@@ -68,50 +70,54 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LaunchedEffect(Unit) {
-                viewModel.revealOverlayControls()
-            }
-
             RandomClipTheme {
-                VideoPlayerScreen(
-                    uiState = uiState,
-                    playerManager = viewModel.playerManager,
-                    onOpenSettings = { viewModel.toggleSettings(true) },
-                    onOpenFavorites = { viewModel.toggleFavorites(true) },
-                    onRefresh = { viewModel.refresh() },
-                    onTogglePlayPause = { viewModel.togglePlayPause() },
-                    onStop = { viewModel.stopClip() },
-                    onSkipNext = { viewModel.skipToNext() },
-                    onSkipPrevious = { viewModel.playPreviousClip() },
-                    onFavorite = { viewModel.favoriteCurrentMoment() },
-                    onToggleDisplayMode = { viewModel.toggleDisplayMode() },
-                    onManualAdvance = { viewModel.onManualAdvance() },
-                    onRevealControls = { viewModel.revealOverlayControls() },
-                )
-
-                SettingsSheet(
-                    visible = uiState.showSettings,
-                    settings = uiState.settings,
-                    onDismiss = { viewModel.toggleSettings(false) },
-                    onPickFolder = { folderPicker.launch(null) },
-                    onRemoveFolder = { viewModel.removeFolder(it) },
-                    onClipDurationChange = viewModel::updateClipDuration,
-                    onSoundChange = viewModel::updateSoundEnabled,
-                    onAutoAdvanceChange = viewModel::updateAutoAdvance,
-                    onPlaybackSpeedChange = viewModel::updatePlaybackSpeed,
-                    onDisplayModeChange = viewModel::updateDisplayMode,
-                    onLockPortraitChange = viewModel::updateLockPortrait,
-                    onAvoidRepeatsChange = viewModel::updateAvoidRepeats,
-                    onPauseOnLockChange = viewModel::updatePauseOnLock,
-                )
-                
-                FavoritesSheet(
-                    visible = uiState.showFavorites,
-                    favorites = uiState.favorites,
-                    onDismiss = { viewModel.toggleFavorites(false) },
-                    onFavoriteSelected = { viewModel.playFavorite(it) },
-                    onDeleteFavorite = { viewModel.deleteFavorite(it) }
-                )
+                when (uiState.currentScreen) {
+                    Screen.DASHBOARD -> DashboardScreen(
+                        onStartPlayback = {
+                            viewModel.navigateTo(Screen.PLAYER)
+                            viewModel.skipToNext()
+                        },
+                        onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
+                        onOpenFavorites = { viewModel.navigateTo(Screen.FAVORITES) },
+                    )
+                    Screen.PLAYER -> VideoPlayerScreen(
+                        uiState = uiState,
+                        playerManager = viewModel.playerManager,
+                        onTogglePlayPause = { viewModel.togglePlayPause() },
+                        onSkipNext = { viewModel.skipToNext() },
+                        onSkipPrevious = { viewModel.playPreviousClip() },
+                        onFavorite = { viewModel.favoriteCurrentMoment() },
+                        onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
+                        onToggleDisplayMode = { viewModel.toggleDisplayMode() },
+                        onToggleRandomMode = { viewModel.updateRandomMode(!uiState.settings.randomMode) },
+                        onBack = { viewModel.navigateTo(Screen.DASHBOARD) },
+                    )
+                    Screen.SETTINGS -> SettingsScreen(
+                        settings = uiState.settings,
+                        onBack = { viewModel.navigateTo(uiState.previousScreen) },
+                        onPickFolder = { folderPicker.launch(null) },
+                        onRemoveFolder = { viewModel.removeFolder(it) },
+                        onClipDurationChange = viewModel::updateClipDuration,
+                        onSoundChange = viewModel::updateSoundEnabled,
+                        onAutoAdvanceChange = viewModel::updateAutoAdvance,
+                        onPlaybackSpeedChange = viewModel::updatePlaybackSpeed,
+                        onAdvancedSpeedChange = viewModel::updatePlaybackSpeed,
+                        onDisplayModeChange = viewModel::updateDisplayMode,
+                        onLockPortraitChange = viewModel::updateLockPortrait,
+                        onAvoidRepeatsChange = viewModel::updateAvoidRepeats,
+                        onPauseOnLockChange = viewModel::updatePauseOnLock,
+                        onRandomModeChange = viewModel::updateRandomMode,
+                        onOpenFavorites = { viewModel.navigateTo(Screen.FAVORITES) },
+                    )
+                    Screen.FAVORITES -> FavoritesSheet(
+                        visible = true,
+                        favorites = uiState.favorites,
+                        onDismiss = { viewModel.navigateTo(Screen.DASHBOARD) },
+                        onFavoriteSelected = { viewModel.playFavorite(it) },
+                        onDeleteFavorite = { viewModel.deleteFavorite(it) },
+                        onStartPlaylist = { viewModel.startFavoritesPlaylist() },
+                    )
+                }
             }
         }
     }

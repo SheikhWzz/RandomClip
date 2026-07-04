@@ -1,17 +1,22 @@
 package com.randomclip.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,7 +36,8 @@ fun FavoritesSheet(
     favorites: List<FavoriteItem>,
     onDismiss: () -> Unit,
     onFavoriteSelected: (FavoriteItem) -> Unit,
-    onDeleteFavorite: (Long) -> Unit
+    onDeleteFavorite: (Long) -> Unit,
+    onStartPlaylist: () -> Unit,
 ) {
     if (!visible) return
 
@@ -40,18 +46,37 @@ fun FavoritesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = Color(0xFF0D0D0D),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            Text(
-                text = "Favoriten",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(16.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Favoriten",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
+                Button(
+                    onClick = onStartPlaylist,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF9500),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Playlist abspielen")
+                }
+            }
 
             if (favorites.isEmpty()) {
                 Box(
@@ -60,15 +85,21 @@ fun FavoritesSheet(
                         .height(200.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Noch keine Favoriten gespeichert.")
+                    Text(
+                        text = "Noch keine Favoriten gespeichert.",
+                        color = Color(0xFF8A8A8A)
+                    )
                 }
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 120.dp),
                     modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(favorites) { favorite ->
-                        FavoriteRow(
+                        FavoriteGridItem(
                             favorite = favorite,
                             onClick = { onFavoriteSelected(favorite) },
                             onDelete = { onDeleteFavorite(favorite.id) }
@@ -81,20 +112,23 @@ fun FavoritesSheet(
 }
 
 @Composable
-fun FavoriteRow(
+fun FavoriteGridItem(
     favorite: FavoriteItem,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
-    val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) }
 
-    Row(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .aspectRatio(9f / 16f)
+            .border(
+                width = 2.dp,
+                color = Color(0xFFFF9500),
+                shape = RoundedCornerShape(8.dp)
+            )
             .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             model = ImageRequest.Builder(context)
@@ -104,46 +138,49 @@ fun FavoriteRow(
                 .crossfade(true)
                 .build(),
             contentDescription = null,
-            modifier = Modifier
-                .size(80.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        // Gradient overlay for text readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            androidx.compose.ui.graphics.Color.Transparent,
+                            androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f)
+                        )
+                    )
+                )
+        )
 
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = favorite.displayName,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "Zeit: ${formatDuration(favorite.timestampMs)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                text = dateFormat.format(favorite.savedAt),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
+        // Video name
+        Text(
+            text = favorite.displayName,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.White,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(8.dp)
+        )
 
-        IconButton(onClick = onDelete) {
+        // Delete button
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(32.dp)
+        ) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Löschen",
-                tint = MaterialTheme.colorScheme.error
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
-}
-
-private fun formatDuration(ms: Long): String {
-    val totalSeconds = ms / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%02d:%02d".format(minutes, seconds)
 }

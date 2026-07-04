@@ -255,6 +255,7 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+drawable ic_launcher
 drawable ic_launcher_foreground
 drawable notification_action_background
 drawable notification_bg
@@ -269,6 +270,7 @@ drawable notification_template_icon_bg
 drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
+drawable play_button_transparent_for_haupt_menu
 font roboto_medium_numbers
 id accessibility_action_clickable_span
 id accessibility_custom_action_0

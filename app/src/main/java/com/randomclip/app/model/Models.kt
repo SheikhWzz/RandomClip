@@ -50,4 +50,5 @@ data class AppSettings(
     val lockPortrait: Boolean = false,
     val avoidRepeats: Boolean = true,
     val pauseOnLock: Boolean = true,
+    val randomMode: Boolean = false,
 )

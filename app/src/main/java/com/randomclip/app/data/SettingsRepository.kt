@@ -35,6 +35,7 @@ class SettingsRepository(private val context: Context) {
             lockPortrait = prefs[KEY_LOCK_PORTRAIT] ?: false,
             avoidRepeats = prefs[KEY_AVOID_REPEATS] ?: true,
             pauseOnLock = prefs[KEY_PAUSE_ON_LOCK] ?: true,
+            randomMode = prefs[KEY_RANDOM_MODE] ?: false,
         )
     }
 
@@ -84,6 +85,10 @@ class SettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { it[KEY_PAUSE_ON_LOCK] = enabled }
     }
 
+    suspend fun setRandomMode(enabled: Boolean) {
+        context.settingsDataStore.edit { it[KEY_RANDOM_MODE] = enabled }
+    }
+
     companion object {
         private val KEY_CLIP_DURATION = intPreferencesKey("clip_duration_seconds")
         private val KEY_SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
@@ -94,5 +99,6 @@ class SettingsRepository(private val context: Context) {
         private val KEY_LOCK_PORTRAIT = booleanPreferencesKey("lock_portrait")
         private val KEY_AVOID_REPEATS = booleanPreferencesKey("avoid_repeats")
         private val KEY_PAUSE_ON_LOCK = booleanPreferencesKey("pause_on_lock")
+        private val KEY_RANDOM_MODE = booleanPreferencesKey("random_mode")
     }
 }
