@@ -17,6 +17,7 @@ import com.randomclip.app.player.VideoPlayerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +37,18 @@ data class UiState(
     val awaitingManualAdvance: Boolean = false,
     val isPlaying: Boolean = false,
     val showOverlayControls: Boolean = true,
+    val currentScreen: Screen = Screen.DASHBOARD,
+    val isFavorite: Boolean = false,
+    val isFavoritesPlaylistMode: Boolean = false,
+    val previousScreen: Screen = Screen.DASHBOARD,
 )
+
+enum class Screen {
+    DASHBOARD,
+    PLAYER,
+    SETTINGS,
+    FAVORITES,
+}
 
 class RandomClipViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -55,6 +67,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     private val history = mutableListOf<ClipSelection>()
     private var historyIndex = -1
     private val antiRepeatQueue = mutableListOf<Uri>()
+    private var favoritesPlaylistIndex = 0
 
     init {
         playerManager.onActiveClipEnded = { onClipFinished() }
@@ -105,6 +118,16 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    fun navigateTo(screen: Screen) {
+        val currentScreen = _uiState.value.currentScreen
+        _uiState.update { 
+            it.copy(
+                currentScreen = screen,
+                previousScreen = if (screen == Screen.SETTINGS || screen == Screen.FAVORITES) currentScreen else Screen.DASHBOARD
+            ) 
+        }
+    }
+
     fun toggleSettings(show: Boolean) {
         _uiState.update { it.copy(showSettings = show) }
     }
@@ -112,6 +135,34 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     fun toggleFavorites(show: Boolean) {
         _uiState.update { it.copy(showFavorites = show) }
         if (show) loadFavorites()
+    }
+
+    fun updateRandomMode(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setRandomMode(enabled) }
+    }
+
+    fun startFavoritesPlaylist() {
+        val favorites = _uiState.value.favorites
+        if (favorites.isEmpty()) return
+        
+        favoritesPlaylistIndex = 0
+        _uiState.update { 
+            it.copy(
+                isFavoritesPlaylistMode = true,
+                currentScreen = Screen.PLAYER
+            ) 
+        }
+        playFavorite(favorites[0])
+    }
+
+    private fun playNextInFavoritesPlaylist() {
+        if (!_uiState.value.isFavoritesPlaylistMode) return
+        
+        val favorites = _uiState.value.favorites
+        if (favorites.isEmpty()) return // Don't exit playlist mode, just do nothing
+        
+        favoritesPlaylistIndex = (favoritesPlaylistIndex + 1) % favorites.size
+        playFavorite(favorites[favoritesPlaylistIndex])
     }
 
     fun loadFavorites() {
@@ -150,12 +201,13 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
             it.copy(
                 currentClip = selection,
                 showFavorites = false,
+                currentScreen = Screen.PLAYER,
                 isPlaying = true,
                 statusMessage = video.displayName
             )
         }
         playerManager.playClip(selection)
-        scheduleNextClip(selection)
+        scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
         revealOverlayControls()
     }
 
@@ -220,7 +272,11 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
     fun skipToNext() {
         revealOverlayControls()
-        playRandomClip()
+        if (_uiState.value.isFavoritesPlaylistMode) {
+            playNextInFavoritesPlaylist()
+        } else {
+            playRandomClip()
+        }
     }
 
     fun playPreviousClip() {
@@ -237,7 +293,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
             playerManager.playClip(selection)
-            scheduleNextClip(selection)
+            scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
             revealOverlayControls()
         }
     }
@@ -300,9 +356,18 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         
         val excludeUris = if (state.settings.avoidRepeats) antiRepeatQueue else emptyList<Uri>()
 
+        // Random Mode: Generate random clip duration and speed
+        val (clipDuration, playbackSpeed) = if (state.settings.randomMode) {
+            val randomDuration = Random.nextInt(2, 16)
+            val randomSpeed = Random.nextFloat() * 2.5f + 0.5f
+            randomDuration to randomSpeed
+        } else {
+            state.settings.clipDurationSeconds to state.settings.playbackSpeed
+        }
+
         val selection = videoRepository.pickRandomClip(
             videos = state.videos,
-            clipDurationSeconds = state.settings.clipDurationSeconds,
+            clipDurationSeconds = clipDuration,
             excludeUris = excludeUris,
         ) ?: return
 
@@ -328,8 +393,14 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
             )
         }
 
+        // Apply playback speed
+        playerManager.applySettings(
+            muted = !state.settings.soundEnabled,
+            speed = playbackSpeed,
+        )
+
         playerManager.playClip(selection)
-        scheduleNextClip(selection)
+        scheduleNextClip(selection, clipDuration)
         preloadFollowingClip(selection)
         revealOverlayControls()
         clipTransitionInProgress = false
@@ -347,9 +418,9 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         playerManager.preloadClip(next)
     }
 
-    private fun scheduleNextClip(selection: ClipSelection) {
+    private fun scheduleNextClip(selection: ClipSelection, clipDurationSeconds: Int) {
         clipTimerJob?.cancel()
-        val durationMs = _uiState.value.settings.clipDurationSeconds * 1000L
+        val durationMs = clipDurationSeconds * 1000L
         val endMs = (selection.startPositionMs + durationMs)
             .coerceAtMost(selection.video.durationMs)
 
@@ -371,7 +442,11 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
         if (_uiState.value.settings.autoAdvance) {
             clipTransitionInProgress = false
-            playRandomClip()
+            if (_uiState.value.isFavoritesPlaylistMode) {
+                playNextInFavoritesPlaylist()
+            } else {
+                playRandomClip()
+            }
         } else {
             _uiState.update {
                 it.copy(
