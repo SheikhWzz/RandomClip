@@ -36,6 +36,7 @@ class SettingsRepository(private val context: Context) {
             avoidRepeats = prefs[KEY_AVOID_REPEATS] ?: true,
             pauseOnLock = prefs[KEY_PAUSE_ON_LOCK] ?: true,
             randomMode = prefs[KEY_RANDOM_MODE] ?: false,
+            loopClip = prefs[KEY_LOOP_CLIP] ?: false,
             language = prefs[KEY_LANGUAGE] ?: "en",
         )
     }
@@ -90,6 +91,10 @@ class SettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { it[KEY_RANDOM_MODE] = enabled }
     }
 
+    suspend fun setLoopClip(enabled: Boolean) {
+        context.settingsDataStore.edit { it[KEY_LOOP_CLIP] = enabled }
+    }
+
     suspend fun setLanguage(languageCode: String) {
         context.settingsDataStore.edit { it[KEY_LANGUAGE] = languageCode }
     }
@@ -105,6 +110,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_AVOID_REPEATS = booleanPreferencesKey("avoid_repeats")
         private val KEY_PAUSE_ON_LOCK = booleanPreferencesKey("pause_on_lock")
         private val KEY_RANDOM_MODE = booleanPreferencesKey("random_mode")
+        private val KEY_LOOP_CLIP = booleanPreferencesKey("loop_clip")
         private val KEY_LANGUAGE = stringPreferencesKey("language")
     }
 }

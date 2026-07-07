@@ -36,6 +36,7 @@ fun SettingsScreen(
     onAvoidRepeatsChange: (Boolean) -> Unit,
     onPauseOnLockChange: (Boolean) -> Unit,
     onRandomModeChange: (Boolean) -> Unit,
+    onLoopClipChange: (Boolean) -> Unit,
     onOpenFavorites: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -97,6 +98,11 @@ fun SettingsScreen(
                         label = stringResource(R.string.auto_advance),
                         checked = settings.autoAdvance,
                         onCheckedChange = onAutoAdvanceChange,
+                    )
+                    SettingToggle(
+                        label = stringResource(R.string.loop_clip),
+                        checked = settings.loopClip,
+                        onCheckedChange = onLoopClipChange,
                     )
                     SettingToggle(
                         label = stringResource(R.string.anti_repeat),

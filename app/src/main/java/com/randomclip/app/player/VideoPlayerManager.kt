@@ -25,6 +25,7 @@ class VideoPlayerManager(context: Context) {
     private var activePendingSeekMs: Long? = null
     private var preloadPendingSeekMs: Long? = null
     private var preloadedClip: ClipSelection? = null
+    private var autoPlayOnReady = true
 
     var onActiveClipEnded: (() -> Unit)? = null
     var onIsPlayingChanged: ((Boolean) -> Unit)? = null
@@ -79,7 +80,11 @@ class VideoPlayerManager(context: Context) {
                     target.seekTo(seekMs)
                     activePendingSeekMs = null
                 }
-                target.playWhenReady = true
+                target.playWhenReady = autoPlayOnReady
+                if (!autoPlayOnReady) {
+                    target.pause()
+                }
+                onIsPlayingChanged?.invoke(target.isPlaying)
             }
 
             preloadPlayer -> {
@@ -101,10 +106,14 @@ class VideoPlayerManager(context: Context) {
         playerB.setPlaybackSpeed(playbackSpeed)
     }
 
-    fun playClip(selection: ClipSelection) {
+    fun playClip(selection: ClipSelection, autoPlay: Boolean = true) {
+        autoPlayOnReady = autoPlay
         if (preloadedClip == selection && preloadPlayer.playbackState != Player.STATE_IDLE) {
             swapPlayers()
-            activePlayer.playWhenReady = true
+            activePlayer.playWhenReady = autoPlay
+            if (!autoPlay) {
+                activePlayer.pause()
+            }
             preloadedClip = null
             onIsPlayingChanged?.invoke(activePlayer.isPlaying)
             return

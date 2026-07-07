@@ -38,6 +38,17 @@ data class FavoriteItem(
 data class ClipSelection(
     val video: VideoItem,
     val startPositionMs: Long,
+    val endPositionMs: Long? = null,
+)
+
+data class RepSegment(
+    val startMs: Long,
+    val endMs: Long,
+)
+
+data class GameModeData(
+    val videoFile: String,
+    val reps: List<RepSegment>,
 )
 
 data class AppSettings(
@@ -51,5 +62,6 @@ data class AppSettings(
     val avoidRepeats: Boolean = true,
     val pauseOnLock: Boolean = true,
     val randomMode: Boolean = false,
+    val loopClip: Boolean = false,
     val language: String = "en",
 )

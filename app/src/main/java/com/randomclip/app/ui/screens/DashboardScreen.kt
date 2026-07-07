@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,6 +51,7 @@ import com.randomclip.app.ui.components.PlayWithGearIcon
 @Composable
 fun DashboardScreen(
     onStartPlayback: () -> Unit,
+    onStartGameMode: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenGeneralSettings: () -> Unit,
     onOpenFavorites: () -> Unit,
@@ -136,7 +140,24 @@ fun DashboardScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Button(
+                onClick = onStartGameMode,
+                modifier = Modifier
+                    .widthIn(min = 200.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9500),
+                    contentColor = Color.White,
+                ),
+            ) {
+                Text(
+                    text = stringResource(R.string.start_game_mode),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(48.dp),

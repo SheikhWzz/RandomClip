@@ -18,13 +18,13 @@ import com.randomclip.app.player.VideoPlayerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class UiState(
     val settings: AppSettings = AppSettings(),
@@ -41,6 +41,7 @@ data class UiState(
     val currentScreen: Screen = Screen.DASHBOARD,
     val isFavorite: Boolean = false,
     val isFavoritesPlaylistMode: Boolean = false,
+    val loopClipActive: Boolean = false,
     val previousScreen: Screen = Screen.DASHBOARD,
 )
 
@@ -170,6 +171,15 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch { settingsRepository.setRandomMode(enabled) }
     }
 
+    fun updateLoopClip(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setLoopClip(enabled) }
+    }
+
+    fun toggleLoopClip() {
+        _uiState.update { it.copy(loopClipActive = !it.loopClipActive) }
+        revealOverlayControls()
+    }
+
     fun startFavoritesPlaylist() {
         val favorites = _uiState.value.favorites
         if (favorites.isEmpty()) return
@@ -224,18 +234,25 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     fun loadFavorites() {
         viewModelScope.launch {
             val favs = videoRepository.getFavorites()
-            _uiState.update { it.copy(favorites = favs) }
+            _uiState.update { state ->
+                val clip = state.currentClip
+                val isFav = clip?.let {
+                    isClipFavorited(it, favs, state.settings.clipDurationSeconds)
+                } ?: false
+                state.copy(favorites = favs, isFavorite = isFav)
+            }
         }
     }
 
     fun favoriteCurrentMoment() {
         val clip = _uiState.value.currentClip ?: return
-        val pos = playerManager.player.currentPosition
-        val currentVideoUri = clip.video.uri
-        
-        // Check if this video is already a favorite
-        val existingFavorite = _uiState.value.favorites.find { it.videoUri == currentVideoUri }
-        
+        val state = _uiState.value
+        val existingFavorite = findFavoriteForClip(
+            clip = clip,
+            favorites = state.favorites,
+            clipDurationSeconds = state.settings.clipDurationSeconds,
+        )
+
         if (existingFavorite != null) {
             _uiState.update { it.copy(isFavorite = false) }
             viewModelScope.launch {
@@ -256,7 +273,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         } else {
             _uiState.update { it.copy(isFavorite = true) }
             viewModelScope.launch {
-                videoRepository.saveFavorite(clip.video, pos)
+                videoRepository.saveFavorite(clip.video, clip.startPositionMs)
                 loadFavorites()
                 _uiState.update {
                     it.copy(
@@ -274,6 +291,12 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun playFavorite(favorite: FavoriteItem) {
+        val favorites = _uiState.value.favorites
+        val index = favorites.indexOfFirst { it.id == favorite.id }
+        if (index >= 0) {
+            favoritesPlaylistIndex = index
+        }
+        _uiState.update { it.copy(isFavoritesPlaylistMode = true) }
         if (_uiState.value.currentScreen != Screen.PLAYER) {
             pushScreen(Screen.PLAYER)
         }
@@ -281,27 +304,37 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun playFavoriteClip(favorite: FavoriteItem) {
+        val state = _uiState.value
+        val (clipDuration, playbackSpeed) = resolvePlaybackParams(state.settings)
         val video = VideoItem(
             uri = favorite.videoUri,
             displayName = favorite.displayName,
-            durationMs = favorite.durationMs
+            durationMs = favorite.durationMs,
         )
-        val selection = ClipSelection(video, favorite.timestampMs)
-        
+        val endMs = (favorite.timestampMs + clipDuration * 1000L).coerceAtMost(video.durationMs)
+        val selection = ClipSelection(video, favorite.timestampMs, endMs)
+
         history.add(selection)
         historyIndex = history.size - 1
-        
+
+        val isFav = isClipFavorited(selection, state.favorites, clipDuration)
+
         _uiState.update {
             it.copy(
                 currentClip = selection,
                 showFavorites = false,
                 isPlaying = true,
-                isFavorite = true,
+                isFavorite = isFav,
+                loopClipActive = state.settings.loopClip,
                 statusMessage = video.displayName,
             )
         }
+        playerManager.applySettings(
+            muted = !state.settings.soundEnabled,
+            speed = playbackSpeed,
+        )
         playerManager.playClip(selection)
-        scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
+        scheduleNextClip(selection, clipDuration)
         revealOverlayControls()
     }
 
@@ -370,6 +403,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
     fun skipToNext() {
         revealOverlayControls()
+        _uiState.update { it.copy(loopClipActive = false) }
         if (_uiState.value.isFavoritesPlaylistMode) {
             playNextInFavoritesPlaylist()
         } else {
@@ -378,25 +412,31 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun playPreviousClip() {
+        _uiState.update { it.copy(loopClipActive = false) }
         if (_uiState.value.isFavoritesPlaylistMode) {
             playPreviousInFavoritesPlaylist()
-        } else {
-            if (historyIndex > 0) {
-                historyIndex--
-                val selection = history[historyIndex]
-                
-                _uiState.update {
-                    it.copy(
-                        currentClip = selection,
-                        awaitingManualAdvance = false,
-                        statusMessage = selection.video.displayName,
-                        isPlaying = true,
-                    )
-                }
-                playerManager.playClip(selection)
-                scheduleNextClip(selection, _uiState.value.settings.clipDurationSeconds)
-                revealOverlayControls()
+        } else if (historyIndex > 0) {
+            historyIndex--
+            val selection = history[historyIndex]
+            val isFav = isClipFavorited(
+                selection,
+                _uiState.value.favorites,
+                clipDurationSeconds(selection, _uiState.value.settings),
+            )
+
+            _uiState.update {
+                it.copy(
+                    currentClip = selection,
+                    awaitingManualAdvance = false,
+                    loopClipActive = _uiState.value.settings.loopClip,
+                    statusMessage = selection.video.displayName,
+                    isPlaying = true,
+                    isFavorite = isFav,
+                )
             }
+            playerManager.playClip(selection)
+            scheduleNextClip(selection, clipDurationSeconds(selection, _uiState.value.settings))
+            revealOverlayControls()
         }
     }
 
@@ -418,9 +458,12 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     private fun handlePlaybackError(uri: Uri) {
         viewModelScope.launch {
             videoRepository.markAsUnplayable(uri)
-            // Remove from current list to avoid picking it again in this session
             _uiState.update { it.copy(videos = it.videos.filter { v -> v.uri != uri }) }
-            playRandomClip()
+            if (_uiState.value.isFavoritesPlaylistMode) {
+                playNextInFavoritesPlaylist()
+            } else {
+                playRandomClip()
+            }
         }
     }
 
@@ -463,17 +506,21 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
         val state = _uiState.value
         if (state.videos.isEmpty()) return
-        
+
         val excludeUris = if (state.settings.avoidRepeats) antiRepeatQueue else emptyList<Uri>()
 
-        // Random Mode: Generate random clip duration and speed
-        val (clipDuration, playbackSpeed) = if (state.settings.randomMode) {
-            val randomDuration = Random.nextInt(2, 16)
-            val randomSpeed = Random.nextFloat() * 2.5f + 0.5f
-            randomDuration to randomSpeed
-        } else {
-            state.settings.clipDurationSeconds to state.settings.playbackSpeed
+        viewModelScope.launch {
+            playStandardRandomClip(state, excludeUris)
         }
+    }
+
+    private fun playStandardRandomClip(
+        state: UiState,
+        excludeUris: List<Uri>,
+    ) {
+        if (clipTransitionInProgress) return
+
+        val (clipDuration, playbackSpeed) = resolvePlaybackParams(state.settings)
 
         val selection = videoRepository.pickRandomClip(
             videos = state.videos,
@@ -482,32 +529,33 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         ) ?: return
 
         clipTransitionInProgress = true
-        
-        // Update History
+
         history.add(selection)
         if (history.size > 20) history.removeAt(0)
         historyIndex = history.size - 1
-        
-        // Update Anti-Repeat
+
         if (state.settings.avoidRepeats) {
             antiRepeatQueue.add(selection.video.uri)
             if (antiRepeatQueue.size > 15) antiRepeatQueue.removeAt(0)
         }
 
-        // Check if current video is a favorite
-        val isVideoFavorite = state.favorites.any { it.videoUri == selection.video.uri }
+        val isVideoFavorite = isClipFavorited(
+            selection,
+            state.favorites,
+            clipDuration,
+        )
 
         _uiState.update {
             it.copy(
                 currentClip = selection,
                 isFavorite = isVideoFavorite,
                 awaitingManualAdvance = false,
+                loopClipActive = state.settings.loopClip,
                 statusMessage = selection.video.displayName,
                 isPlaying = true,
             )
         }
 
-        // Apply playback speed
         playerManager.applySettings(
             muted = !state.settings.soundEnabled,
             speed = playbackSpeed,
@@ -520,7 +568,19 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         clipTransitionInProgress = false
     }
 
+    private fun resolvePlaybackParams(settings: AppSettings): Pair<Int, Float> {
+        return if (settings.randomMode) {
+            val randomDuration = Random.nextInt(2, 16)
+            val randomSpeed = Random.nextFloat() * 2.5f + 0.5f
+            randomDuration to randomSpeed
+        } else {
+            settings.clipDurationSeconds to settings.playbackSpeed
+        }
+    }
+
     private fun preloadFollowingClip(current: ClipSelection) {
+        if (_uiState.value.isFavoritesPlaylistMode) return
+
         val state = _uiState.value
         val excludeUris = if (state.settings.avoidRepeats) antiRepeatQueue + current.video.uri else listOf(current.video.uri)
         
@@ -534,9 +594,9 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun scheduleNextClip(selection: ClipSelection, clipDurationSeconds: Int) {
         clipTimerJob?.cancel()
-        val durationMs = clipDurationSeconds * 1000L
-        val endMs = (selection.startPositionMs + durationMs)
-            .coerceAtMost(selection.video.durationMs)
+        val endMs = selection.endPositionMs
+            ?: (selection.startPositionMs + clipDurationSeconds * 1000L)
+                .coerceAtMost(selection.video.durationMs)
 
         clipTimerJob = viewModelScope.launch {
             while (true) {
@@ -549,20 +609,26 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun onClipFinished() {
-        // Don't auto-advance if we're not in the player screen anymore
         if (_uiState.value.currentScreen != Screen.PLAYER) return
-        
+
         if (clipTransitionInProgress) return
         clipTransitionInProgress = true
         clipTimerJob?.cancel()
         playerManager.pause()
 
+        if (_uiState.value.loopClipActive) {
+            val selection = _uiState.value.currentClip
+            if (selection != null) {
+                replayCurrentClip(selection)
+                return
+            }
+        }
+
         if (_uiState.value.settings.autoAdvance) {
             clipTransitionInProgress = false
-            if (_uiState.value.isFavoritesPlaylistMode) {
-                playNextInFavoritesPlaylist()
-            } else {
-                playRandomClip()
+            when {
+                _uiState.value.isFavoritesPlaylistMode -> playNextInFavoritesPlaylist()
+                else -> playRandomClip()
             }
         } else {
             _uiState.update {
@@ -574,6 +640,48 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
             clipTransitionInProgress = false
         }
     }
+
+    private fun replayCurrentClip(selection: ClipSelection) {
+        val clipDuration = clipDurationSeconds(selection, _uiState.value.settings)
+        playerManager.playClip(selection)
+        scheduleNextClip(selection, clipDuration)
+        _uiState.update {
+            it.copy(
+                awaitingManualAdvance = false,
+                isPlaying = true,
+            )
+        }
+        clipTransitionInProgress = false
+        revealOverlayControls()
+    }
+
+    private fun clipDurationSeconds(clip: ClipSelection, settings: AppSettings): Int {
+        val endMs = clip.endPositionMs ?: clipEndMs(clip, settings.clipDurationSeconds)
+        return ((endMs - clip.startPositionMs) / 1000L).toInt().coerceAtLeast(1)
+    }
+
+    private fun clipEndMs(clip: ClipSelection, clipDurationSeconds: Int): Long {
+        return clip.endPositionMs
+            ?: (clip.startPositionMs + clipDurationSeconds * 1000L).coerceAtMost(clip.video.durationMs)
+    }
+
+    private fun findFavoriteForClip(
+        clip: ClipSelection,
+        favorites: List<FavoriteItem>,
+        clipDurationSeconds: Int,
+    ): FavoriteItem? {
+        val clipEnd = clip.endPositionMs ?: clipEndMs(clip, clipDurationSeconds)
+        return favorites.find { favorite ->
+            favorite.videoUri == clip.video.uri &&
+                favorite.timestampMs in clip.startPositionMs..clipEnd
+        }
+    }
+
+    private fun isClipFavorited(
+        clip: ClipSelection,
+        favorites: List<FavoriteItem>,
+        clipDurationSeconds: Int,
+    ): Boolean = findFavoriteForClip(clip, favorites, clipDurationSeconds) != null
 
     private fun restorePersistedPermission(folderUri: Uri) {
         try {

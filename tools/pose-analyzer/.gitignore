@@ -1,0 +1,9 @@
+venv/
+.venv-nix/
+models/*.task
+!models/.gitkeep
+__pycache__/
+*.pyc
+output/*.json
+output/*_debug.mp4
+!output/.gitkeep
