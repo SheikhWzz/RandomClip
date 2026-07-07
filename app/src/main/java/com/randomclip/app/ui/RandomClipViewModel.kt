@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.randomclip.app.data.SettingsRepository
 import com.randomclip.app.data.VideoRepository
 import com.randomclip.app.data.VideoScanner
+import com.randomclip.app.R
 import com.randomclip.app.model.AppSettings
 import com.randomclip.app.model.ClipSelection
 import com.randomclip.app.model.FavoriteItem
@@ -47,7 +48,14 @@ enum class Screen {
     DASHBOARD,
     PLAYER,
     SETTINGS,
+    GENERAL_SETTINGS,
     FAVORITES,
+}
+
+private enum class TransientStatus {
+    FAVORITE_REMOVED,
+    MOMENT_SAVED,
+    PLAYLIST_EXITED,
 }
 
 class RandomClipViewModel(application: Application) : AndroidViewModel(application) {
@@ -68,6 +76,20 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     private var historyIndex = -1
     private val antiRepeatQueue = mutableListOf<Uri>()
     private var favoritesPlaylistIndex = 0
+    private var activeTransientStatus: TransientStatus? = null
+    private val screenBackStack = mutableListOf(Screen.DASHBOARD)
+
+    private fun syncScreenFromStack() {
+        val current = screenBackStack.last()
+        val previous = screenBackStack.getOrNull(screenBackStack.lastIndex - 1) ?: Screen.DASHBOARD
+        _uiState.update { it.copy(currentScreen = current, previousScreen = previous) }
+    }
+
+    private fun pushScreen(screen: Screen) {
+        if (screenBackStack.last() == screen) return
+        screenBackStack.add(screen)
+        syncScreenFromStack()
+    }
 
     init {
         playerManager.onActiveClipEnded = { onClipFinished() }
@@ -119,13 +141,20 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun navigateTo(screen: Screen) {
-        val currentScreen = _uiState.value.currentScreen
-        _uiState.update { 
-            it.copy(
-                currentScreen = screen,
-                previousScreen = if (screen == Screen.SETTINGS || screen == Screen.FAVORITES) currentScreen else Screen.DASHBOARD
-            ) 
-        }
+        pushScreen(screen)
+    }
+
+    fun navigateBack(): Boolean {
+        if (screenBackStack.size <= 1) return false
+        screenBackStack.removeAt(screenBackStack.lastIndex)
+        syncScreenFromStack()
+        return true
+    }
+
+    fun navigateToDashboard() {
+        screenBackStack.clear()
+        screenBackStack.add(Screen.DASHBOARD)
+        syncScreenFromStack()
     }
 
     fun toggleSettings(show: Boolean) {
@@ -146,25 +175,29 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         if (favorites.isEmpty()) return
         
         favoritesPlaylistIndex = 0
-        _uiState.update { 
-            it.copy(
-                isFavoritesPlaylistMode = true,
-                currentScreen = Screen.PLAYER
-            ) 
+        _uiState.update { it.copy(isFavoritesPlaylistMode = true) }
+        if (_uiState.value.currentScreen != Screen.PLAYER) {
+            pushScreen(Screen.PLAYER)
         }
-        playFavorite(favorites[0])
+        playFavoriteClip(favorites[0])
     }
 
     fun exitPlaylistMode() {
-        _uiState.update { 
+        if (!_uiState.value.isFavoritesPlaylistMode) return
+
+        _uiState.update {
             it.copy(
                 isFavoritesPlaylistMode = false,
-                statusMessage = "Playlist-Modus verlassen"
-            ) 
+                statusMessage = getApplication<Application>().getString(R.string.playlist_mode_exited),
+            )
         }
+        activeTransientStatus = TransientStatus.PLAYLIST_EXITED
         viewModelScope.launch {
             delay(1000)
-            _uiState.update { it.copy(statusMessage = null) }
+            if (activeTransientStatus == TransientStatus.PLAYLIST_EXITED) {
+                _uiState.update { it.copy(statusMessage = null) }
+                activeTransientStatus = null
+            }
         }
     }
 
@@ -175,7 +208,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         if (favorites.isEmpty()) return // Don't exit playlist mode, just do nothing
         
         favoritesPlaylistIndex = (favoritesPlaylistIndex + 1) % favorites.size
-        playFavorite(favorites[favoritesPlaylistIndex])
+        playFavoriteClip(favorites[favoritesPlaylistIndex])
     }
 
     private fun playPreviousInFavoritesPlaylist() {
@@ -185,7 +218,7 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
         if (favorites.isEmpty()) return // Don't exit playlist mode, just do nothing
         
         favoritesPlaylistIndex = (favoritesPlaylistIndex - 1 + favorites.size) % favorites.size
-        playFavorite(favorites[favoritesPlaylistIndex])
+        playFavoriteClip(favorites[favoritesPlaylistIndex])
     }
 
     fun loadFavorites() {
@@ -198,18 +231,56 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
     fun favoriteCurrentMoment() {
         val clip = _uiState.value.currentClip ?: return
         val pos = playerManager.player.currentPosition
-        viewModelScope.launch {
-            videoRepository.saveFavorite(clip.video, pos)
-            loadFavorites()
-            _uiState.update { it.copy(statusMessage = "Moment gespeichert!") }
-            delay(1500)
-            if (_uiState.value.statusMessage == "Moment gespeichert!") {
-                _uiState.update { it.copy(statusMessage = clip.video.displayName) }
+        val currentVideoUri = clip.video.uri
+        
+        // Check if this video is already a favorite
+        val existingFavorite = _uiState.value.favorites.find { it.videoUri == currentVideoUri }
+        
+        if (existingFavorite != null) {
+            _uiState.update { it.copy(isFavorite = false) }
+            viewModelScope.launch {
+                videoRepository.deleteFavorite(existingFavorite.id)
+                loadFavorites()
+                _uiState.update {
+                    it.copy(
+                        statusMessage = getApplication<Application>().getString(R.string.favorite_removed),
+                    )
+                }
+                activeTransientStatus = TransientStatus.FAVORITE_REMOVED
+                delay(1500)
+                if (activeTransientStatus == TransientStatus.FAVORITE_REMOVED) {
+                    _uiState.update { it.copy(statusMessage = clip.video.displayName) }
+                    activeTransientStatus = null
+                }
+            }
+        } else {
+            _uiState.update { it.copy(isFavorite = true) }
+            viewModelScope.launch {
+                videoRepository.saveFavorite(clip.video, pos)
+                loadFavorites()
+                _uiState.update {
+                    it.copy(
+                        statusMessage = getApplication<Application>().getString(R.string.moment_saved),
+                    )
+                }
+                activeTransientStatus = TransientStatus.MOMENT_SAVED
+                delay(1500)
+                if (activeTransientStatus == TransientStatus.MOMENT_SAVED) {
+                    _uiState.update { it.copy(statusMessage = clip.video.displayName) }
+                    activeTransientStatus = null
+                }
             }
         }
     }
 
     fun playFavorite(favorite: FavoriteItem) {
+        if (_uiState.value.currentScreen != Screen.PLAYER) {
+            pushScreen(Screen.PLAYER)
+        }
+        playFavoriteClip(favorite)
+    }
+
+    private fun playFavoriteClip(favorite: FavoriteItem) {
         val video = VideoItem(
             uri = favorite.videoUri,
             displayName = favorite.displayName,
@@ -224,10 +295,9 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
             it.copy(
                 currentClip = selection,
                 showFavorites = false,
-                currentScreen = Screen.PLAYER,
                 isPlaying = true,
                 isFavorite = true,
-                statusMessage = video.displayName
+                statusMessage = video.displayName,
             )
         }
         playerManager.playClip(selection)
@@ -272,6 +342,10 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
     fun updatePauseOnLock(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setPauseOnLock(enabled) }
+    }
+
+    fun updateLanguage(languageCode: String) {
+        viewModelScope.launch { settingsRepository.setLanguage(languageCode) }
     }
 
     fun toggleDisplayMode() {
@@ -352,20 +426,30 @@ class RandomClipViewModel(application: Application) : AndroidViewModel(applicati
 
     private suspend fun loadVideos(folderUris: Set<Uri>, forceRefresh: Boolean = false) {
         if (folderUris.isEmpty()) {
-            _uiState.update { it.copy(videos = emptyList(), statusMessage = "Keine Ordner ausgewählt") }
+            _uiState.update {
+                it.copy(
+                    videos = emptyList(),
+                    statusMessage = getApplication<Application>().getString(R.string.no_folders_selected),
+                )
+            }
             return
         }
-        
+
         folderUris.forEach { restorePersistedPermission(it) }
-        
-        _uiState.update { it.copy(isLoading = true, statusMessage = "Scanne Videos…") }
+
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                statusMessage = getApplication<Application>().getString(R.string.scanning_videos),
+            )
+        }
         val videos = videoRepository.getVideos(folderUris, forceRefresh)
         _uiState.update {
             it.copy(
                 videos = videos,
                 isLoading = false,
                 statusMessage = if (videos.isEmpty()) {
-                    "Keine Videos in den Ordnern gefunden"
+                    getApplication<Application>().getString(R.string.no_videos_found)
                 } else {
                     null
                 },

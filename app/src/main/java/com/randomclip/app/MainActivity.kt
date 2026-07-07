@@ -4,14 +4,17 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -20,11 +23,12 @@ import com.randomclip.app.ui.RandomClipViewModel
 import com.randomclip.app.ui.Screen
 import com.randomclip.app.ui.screens.DashboardScreen
 import com.randomclip.app.ui.screens.FavoritesSheet
+import com.randomclip.app.ui.screens.GeneralSettingsScreen
 import com.randomclip.app.ui.screens.SettingsScreen
 import com.randomclip.app.ui.screens.VideoPlayerScreen
 import com.randomclip.app.ui.theme.RandomClipTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: RandomClipViewModel by viewModels()
 
@@ -70,6 +74,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            BackHandler(
+                enabled = uiState.currentScreen != Screen.DASHBOARD,
+            ) {
+                when (uiState.currentScreen) {
+                    Screen.PLAYER -> {
+                        if (uiState.isFavoritesPlaylistMode) {
+                            viewModel.exitPlaylistMode()
+                        }
+                        viewModel.navigateToDashboard()
+                    }
+                    else -> viewModel.navigateBack()
+                }
+            }
+
             RandomClipTheme {
                 when (uiState.currentScreen) {
                     Screen.DASHBOARD -> DashboardScreen(
@@ -78,6 +96,7 @@ class MainActivity : ComponentActivity() {
                             viewModel.skipToNext()
                         },
                         onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
+                        onOpenGeneralSettings = { viewModel.navigateTo(Screen.GENERAL_SETTINGS) },
                         onOpenFavorites = { viewModel.navigateTo(Screen.FAVORITES) },
                     )
                     Screen.PLAYER -> VideoPlayerScreen(
@@ -89,15 +108,19 @@ class MainActivity : ComponentActivity() {
                         onFavorite = { viewModel.favoriteCurrentMoment() },
                         onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
                         onToggleDisplayMode = { viewModel.toggleDisplayMode() },
-                        onToggleRandomMode = { viewModel.updateRandomMode(!uiState.settings.randomMode) },
-                        onBack = { 
-                            viewModel.exitPlaylistMode()
-                            viewModel.navigateTo(Screen.DASHBOARD) 
+                        onToggleRandomMode = {
+                            viewModel.updateRandomMode(!uiState.settings.randomMode)
+                        },
+                        onBack = {
+                            if (uiState.isFavoritesPlaylistMode) {
+                                viewModel.exitPlaylistMode()
+                            }
+                            viewModel.navigateToDashboard()
                         },
                     )
                     Screen.SETTINGS -> SettingsScreen(
                         settings = uiState.settings,
-                        onBack = { viewModel.navigateTo(uiState.previousScreen) },
+                        onBack = { viewModel.navigateBack() },
                         onPickFolder = { folderPicker.launch(null) },
                         onRemoveFolder = { viewModel.removeFolder(it) },
                         onClipDurationChange = viewModel::updateClipDuration,
@@ -115,10 +138,22 @@ class MainActivity : ComponentActivity() {
                     Screen.FAVORITES -> FavoritesSheet(
                         visible = true,
                         favorites = uiState.favorites,
-                        onDismiss = { viewModel.navigateTo(Screen.DASHBOARD) },
+                        onDismiss = { viewModel.navigateBack() },
                         onFavoriteSelected = { viewModel.playFavorite(it) },
                         onDeleteFavorite = { viewModel.deleteFavorite(it) },
                         onStartPlaylist = { viewModel.startFavoritesPlaylist() },
+                    )
+                    Screen.GENERAL_SETTINGS -> GeneralSettingsScreen(
+                        selectedLanguage = uiState.settings.language,
+                        onLanguageChange = { languageCode ->
+                            if (languageCode == uiState.settings.language) return@GeneralSettingsScreen
+                            viewModel.updateLanguage(languageCode)
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(languageCode),
+                            )
+                            recreate()
+                        },
+                        onBack = { viewModel.navigateBack() },
                     )
                 }
             }

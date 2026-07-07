@@ -1,7 +1,10 @@
 package com.randomclip.app.ui.screens
 
 import android.view.ViewGroup
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -11,12 +14,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -26,7 +31,6 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,31 +40,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
-import androidx.activity.compose.BackHandler
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.ui.PlayerView
+import com.randomclip.app.R
 import com.randomclip.app.model.VideoDisplayMode
 import com.randomclip.app.player.VideoPlayerManager
 import com.randomclip.app.ui.UiState
+import com.randomclip.app.ui.components.PlayWithGearIcon
+import com.randomclip.app.ui.theme.AccentColor
 import com.randomclip.app.ui.theme.OverlayColor
+import kotlinx.coroutines.delay
 
 @Composable
 fun VideoPlayerScreen(
@@ -80,7 +85,7 @@ fun VideoPlayerScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val displayMode = uiState.settings.displayMode
     val currentVideo = uiState.currentClip?.video
-    
+
     var showVideoName by remember { mutableStateOf(false) }
     LaunchedEffect(showVideoName) {
         if (showVideoName) {
@@ -89,15 +94,17 @@ fun VideoPlayerScreen(
         }
     }
 
-    // Manual trigger for play/pause feedback icon (only on tap, not on swipe)
     var showPlayPauseFeedback by remember { mutableStateOf(false) }
     fun triggerPlayPauseFeedback() {
         showPlayPauseFeedback = true
     }
 
-    // Handle system back button
-    BackHandler(enabled = true) {
-        onBack()
+    BackHandler(enabled = true, onBack = onBack)
+
+    LaunchedEffect(uiState.currentClip) {
+        if (uiState.currentClip != null) {
+            playerManager.play()
+        }
     }
 
     val playerView = remember(context) {
@@ -135,7 +142,6 @@ fun VideoPlayerScreen(
                 detectTapGestures(
                     onTap = { offset ->
                         if (uiState.currentClip != null) {
-                            // Check if tap is in bottom area to show video name
                             val screenHeight = this.size.height
                             if (offset.y > screenHeight * 0.7f) {
                                 showVideoName = true
@@ -149,7 +155,7 @@ fun VideoPlayerScreen(
                         if (uiState.currentClip != null) {
                             onFavorite()
                         }
-                    }
+                    },
                 )
             }
             .pointerInput(Unit) {
@@ -157,17 +163,17 @@ fun VideoPlayerScreen(
                 detectVerticalDragGestures(
                     onDragStart = { dragTotalY = 0f },
                     onDragEnd = {
-                        if (dragTotalY < -100f) { // Swiped UP -> NEXT (random)
+                        if (dragTotalY < -100f) {
                             onSkipNext()
-                        } else if (dragTotalY > 100f) { // Swiped DOWN -> PREVIOUS (history)
+                        } else if (dragTotalY > 100f) {
                             onSkipPrevious()
                         }
                     },
                     onVerticalDrag = { _, dragAmount ->
                         dragTotalY += dragAmount
-                    }
+                    },
                 )
-            }
+            },
     ) {
         if (uiState.currentClip != null) {
             AndroidView(
@@ -192,35 +198,35 @@ fun VideoPlayerScreen(
             )
         } else if (uiState.videos.isEmpty()) {
             Text(
-                text = uiState.statusMessage ?: "Ordner in den Einstellungen wählen",
+                text = uiState.statusMessage ?: stringResource(R.string.select_folder_hint),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.align(Alignment.Center),
             )
         }
 
-        // Calculate display cutout padding
-        val cutoutPadding = WindowInsets.displayCutout.asPaddingValues().calculateLeftPadding(LocalLayoutDirection.current)
+        val cutoutPadding = WindowInsets.displayCutout.asPaddingValues()
+            .calculateLeftPadding(LocalLayoutDirection.current)
 
-        // Favorites mode indicator (top right, shown when tapping bottom area)
-        uiState.statusMessage?.takeIf { uiState.videos.isNotEmpty() && showVideoName && uiState.isFavoritesPlaylistMode }?.let { _ ->
+        uiState.statusMessage?.takeIf {
+            uiState.videos.isNotEmpty() && showVideoName && uiState.isFavoritesPlaylistMode
+        }?.let {
             Text(
-                text = "Favorites",
-                color = androidx.compose.ui.graphics.Color(0xFFFF9500),
+                text = stringResource(R.string.favorites),
+                color = AccentColor,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(end = cutoutPadding + 16.dp, top = 16.dp)
+                    .padding(end = cutoutPadding + 16.dp, top = 16.dp),
             )
         }
 
-        // Instagram-style Play/Pause feedback icon (smaller, no background)
         LaunchedEffect(showPlayPauseFeedback) {
             if (showPlayPauseFeedback) {
                 delay(500)
                 showPlayPauseFeedback = false
             }
         }
-        
+
         AnimatedVisibility(
             visible = showPlayPauseFeedback && uiState.currentClip != null,
             enter = fadeIn(tween(200)),
@@ -230,33 +236,38 @@ fun VideoPlayerScreen(
             Icon(
                 imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                 contentDescription = null,
-                tint = androidx.compose.ui.graphics.Color.White,
-                modifier = Modifier.size(48.dp)
+                tint = Color.White,
+                modifier = Modifier.size(48.dp),
             )
         }
 
-        // Vertical Action Rail (left side)
-        ActionRail(
-            visible = uiState.currentClip != null,
-            onFavorite = onFavorite,
-            onOpenSettings = onOpenSettings,
-            onBack = onBack,
-            onToggleDisplayMode = onToggleDisplayMode,
-            onToggleRandomMode = onToggleRandomMode,
-            isFavorite = uiState.isFavorite,
-            displayMode = uiState.settings.displayMode,
-            randomMode = uiState.settings.randomMode,
-            modifier = Modifier.align(Alignment.CenterStart)
-        )
+        if (uiState.currentClip != null) {
+            ActionRail(
+                onFavorite = onFavorite,
+                onOpenSettings = onOpenSettings,
+                onBack = onBack,
+                onToggleDisplayMode = onToggleDisplayMode,
+                onToggleRandomMode = onToggleRandomMode,
+                isFavorite = uiState.isFavorite,
+                displayMode = uiState.settings.displayMode,
+                randomMode = uiState.settings.randomMode,
+                modifier = Modifier.align(Alignment.CenterStart),
+            )
+        }
 
-        // Video name (only shows briefly when tapping bottom area)
         uiState.statusMessage?.takeIf { uiState.videos.isNotEmpty() && showVideoName }?.let { title ->
             Text(
                 text = buildString {
                     append(title)
                     currentVideo?.aspectRatio?.let { ratio ->
-                        append(" · ")
-                        append(if (currentVideo.isLandscape) "Quer" else "Hoch")
+                        append(stringResource(R.string.aspect_ratio_separator))
+                        append(
+                            if (currentVideo.isLandscape) {
+                                stringResource(R.string.orientation_landscape)
+                            } else {
+                                stringResource(R.string.orientation_portrait)
+                            },
+                        )
                         append(" ")
                         append("%.2f".format(ratio))
                     }
@@ -272,7 +283,7 @@ fun VideoPlayerScreen(
 
         if (uiState.awaitingManualAdvance) {
             Text(
-                text = "Wischen oder Skip für nächsten Clip",
+                text = stringResource(R.string.swipe_for_next),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
@@ -285,7 +296,6 @@ fun VideoPlayerScreen(
 
 @Composable
 private fun ActionRail(
-    visible: Boolean,
     onFavorite: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleDisplayMode: () -> Unit,
@@ -296,62 +306,123 @@ private fun ActionRail(
     randomMode: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 300),
-        label = "rail_alpha"
-    )
-    
     Column(
         modifier = modifier
-            .padding(start = 16.dp, top = 100.dp, bottom = 100.dp)
-            .alpha(alpha),
+            .padding(start = 16.dp, top = 100.dp, bottom = 100.dp),
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        // Favorite (top of rail)
-        ActionRailButton(
+        FavoriteRailButton(
             onClick = onFavorite,
-            icon = Icons.Default.Favorite,
-            contentDescription = "Favorisieren",
-            isFilled = isFavorite,
-            isFavoriteButton = true,
+            isFavorite = isFavorite,
+            contentDescription = stringResource(R.string.favorite),
         )
-        
-        // Display Mode Toggle
+
         ActionRailButton(
             onClick = onToggleDisplayMode,
-            icon = if (displayMode == VideoDisplayMode.VERTICAL_FULLSCREEN) Icons.Default.Crop else Icons.Default.AspectRatio,
-            contentDescription = "Anzeigemodus",
+            icon = if (displayMode == VideoDisplayMode.VERTICAL_FULLSCREEN) {
+                Icons.Default.Crop
+            } else {
+                Icons.Default.AspectRatio
+            },
+            contentDescription = stringResource(R.string.display_mode),
             isFilled = false,
-            isFavoriteButton = false,
         )
-        
-        // Random Mode Toggle
+
         ActionRailButton(
             onClick = onToggleRandomMode,
             icon = Icons.Default.Shuffle,
-            contentDescription = "Zufälliger Modus",
+            contentDescription = stringResource(R.string.random_mode),
             isFilled = randomMode,
-            isFavoriteButton = false,
         )
-        
-        // Settings
-        ActionRailButton(
+
+        PlaySettingsRailButton(
             onClick = onOpenSettings,
-            icon = Icons.Default.Settings,
-            contentDescription = "Einstellungen",
-            isFilled = false,
-            isFavoriteButton = false,
+            contentDescription = stringResource(R.string.video_play_settings_desc),
         )
-        
-        // Back button (bottom of rail)
+
         ActionRailButton(
             onClick = onBack,
             icon = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Zurück",
+            contentDescription = stringResource(R.string.back),
             isFilled = false,
-            isFavoriteButton = false,
+        )
+    }
+}
+
+@Composable
+private fun FavoriteRailButton(
+    onClick: () -> Unit,
+    isFavorite: Boolean,
+    contentDescription: String,
+) {
+    var bounceTarget by remember { mutableFloatStateOf(1f) }
+
+    LaunchedEffect(isFavorite) {
+        bounceTarget = 1.3f
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = bounceTarget,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = if (bounceTarget > 1f) Spring.StiffnessMedium else Spring.StiffnessLow,
+        ),
+        finishedListener = { finalValue ->
+            if (finalValue > 1.1f) {
+                bounceTarget = 1f
+            }
+        },
+        label = "heart_bounce",
+    )
+
+    val iconColor by animateColorAsState(
+        targetValue = if (isFavorite) AccentColor else Color.White,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "heart_color",
+    )
+
+    Box(
+        modifier = Modifier
+            .size(38.88.dp)
+            .scale(scale)
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Favorite,
+            contentDescription = contentDescription,
+            tint = iconColor,
+            modifier = Modifier.size(22.68.dp),
+        )
+    }
+}
+
+@Composable
+private fun PlaySettingsRailButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+) {
+    Box(
+        modifier = Modifier
+            .size(38.88.dp)
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        PlayWithGearIcon(
+            tint = Color.White,
+            size = 22.68.dp,
         )
     }
 }
@@ -362,53 +433,27 @@ private fun ActionRailButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String,
     isFilled: Boolean,
-    isFavoriteButton: Boolean,
 ) {
-    var isPressed by remember { mutableStateOf(false) }
-    
-    // Heart bounce animation (1.0 -> 1.3 -> 1.0) when liked
-    val heartBounce by animateFloatAsState(
-        targetValue = if (isFilled && isFavoriteButton) 1.3f else 1.0f,
-        animationSpec = spring(
-            dampingRatio = 0.5f,
-            stiffness = 300f
-        ),
-        label = "heart_bounce"
-    )
-    
-    val iconSize by animateFloatAsState(
-        targetValue = when {
-            isPressed -> 20.4f // 10% smaller when pressed
-            isFilled && isFavoriteButton -> 25.2f * heartBounce // Bounce when favorited
-            else -> 22.68f // Normal size (10% smaller than 28dp)
-        },
-        animationSpec = tween(durationMillis = 150),
-        label = "icon_size"
-    )
-    
-    val actualColor = when {
-        isFilled && isFavoriteButton -> androidx.compose.ui.graphics.Color(0xFFFF3B30) // Red for favorite
-        isFilled -> androidx.compose.ui.graphics.Color(0xFFFF9500) // Orange for active
-        isPressed -> androidx.compose.ui.graphics.Color(0xFFFF9500).copy(alpha = 0.8f) // Orange tint when pressed
-        else -> androidx.compose.ui.graphics.Color.White
+    val iconColor = when {
+        isFilled -> AccentColor
+        else -> Color.White
     }
-    
+
     Box(
         modifier = Modifier
-            .size(38.88.dp) // 10% smaller than 43.2dp
+            .size(38.88.dp)
             .clickable(
                 onClick = onClick,
-                indication = null, // Remove ripple
-                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-            )
-            .scale(if (isPressed) 0.95f else 1f),
-        contentAlignment = Alignment.Center
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = actualColor,
-            modifier = Modifier.size(iconSize.dp)
+            tint = iconColor,
+            modifier = Modifier.size(22.68.dp),
         )
     }
 }

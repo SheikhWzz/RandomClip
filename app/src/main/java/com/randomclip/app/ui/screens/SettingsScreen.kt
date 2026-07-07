@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.randomclip.app.R
 import com.randomclip.app.model.AppSettings
 import com.randomclip.app.model.VideoDisplayMode
 import kotlin.math.roundToInt
@@ -40,17 +42,20 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Einstellungen") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.back),
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF0D0D0D),
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White,
-                )
+                ),
             )
         },
         containerColor = Color(0xFF0D0D0D),
@@ -64,11 +69,10 @@ fun SettingsScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            // Clip-Länge Sektion
-            SettingsSection(title = "Clip-Länge") {
+            SettingsSection(title = stringResource(R.string.clip_length)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "${settings.clipDurationSeconds} Sekunden",
+                        text = stringResource(R.string.clip_length_seconds, settings.clipDurationSeconds),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.White,
                     )
@@ -82,41 +86,38 @@ fun SettingsScreen(
                 }
             }
 
-            // Wiedergabe Sektion
-            SettingsSection(title = "Wiedergabe") {
+            SettingsSection(title = stringResource(R.string.playback_section)) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     SettingToggle(
-                        label = "Ton aktivieren",
+                        label = stringResource(R.string.enable_sound),
                         checked = settings.soundEnabled,
                         onCheckedChange = onSoundChange,
                     )
                     SettingToggle(
-                        label = "Auto-Advance",
+                        label = stringResource(R.string.auto_advance),
                         checked = settings.autoAdvance,
                         onCheckedChange = onAutoAdvanceChange,
                     )
                     SettingToggle(
-                        label = "Anti-Repeat",
+                        label = stringResource(R.string.anti_repeat),
                         checked = settings.avoidRepeats,
                         onCheckedChange = onAvoidRepeatsChange,
                     )
                     SettingToggle(
-                        label = "Orientierung sperren (Hochformat)",
+                        label = stringResource(R.string.lock_portrait),
                         checked = settings.lockPortrait,
                         onCheckedChange = onLockPortraitChange,
                     )
                     SettingToggle(
-                        label = "Bei Bildschirmsperre pausieren",
+                        label = stringResource(R.string.pause_on_lock),
                         checked = settings.pauseOnLock,
                         onCheckedChange = onPauseOnLockChange,
                     )
                 }
             }
 
-            // Geschwindigkeit Sektion
-            SettingsSection(title = "Geschwindigkeit") {
+            SettingsSection(title = stringResource(R.string.speed_section)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Chips
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth(),
@@ -151,16 +152,15 @@ fun SettingsScreen(
                         )
                     }
 
-                    // Erweitert Sektion
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "Erweitert",
+                            text = stringResource(R.string.advanced),
                             style = MaterialTheme.typography.titleSmall,
                             color = Color(0xFF8A8A8A),
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "${"%.1f".format(settings.playbackSpeed)}x",
+                                text = stringResource(R.string.speed_format, settings.playbackSpeed),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = Color.White,
                             )
@@ -175,50 +175,45 @@ fun SettingsScreen(
                 }
             }
 
-            // Zufallsmodus Sektion
-            SettingsSection(title = "Zufallsmodus") {
+            SettingsSection(title = stringResource(R.string.random_mode_section)) {
                 SettingToggle(
-                    label = "Zufällige Clip-Dauer und Geschwindigkeit",
+                    label = stringResource(R.string.random_mode_desc),
                     checked = settings.randomMode,
                     onCheckedChange = onRandomModeChange,
                 )
             }
 
-            // Anzeige Sektion
-            SettingsSection(title = "Anzeige") {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth(),
+            SettingsSection(title = stringResource(R.string.display_section)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Button(
+                        onClick = { onDisplayModeChange(VideoDisplayMode.VERTICAL_FULLSCREEN) },
+                        enabled = settings.displayMode != VideoDisplayMode.VERTICAL_FULLSCREEN,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFF9500),
+                            contentColor = Color.White,
+                        ),
                     ) {
-                        Button(
-                            onClick = { onDisplayModeChange(VideoDisplayMode.VERTICAL_FULLSCREEN) },
-                            enabled = settings.displayMode != VideoDisplayMode.VERTICAL_FULLSCREEN,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF9500),
-                                contentColor = Color.White,
-                            ),
-                        ) {
-                            Text("Vollbild")
-                        }
-                        Button(
-                            onClick = { onDisplayModeChange(VideoDisplayMode.FIT) },
-                            enabled = settings.displayMode != VideoDisplayMode.FIT,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFF9500),
-                                contentColor = Color.White,
-                            ),
-                        ) {
-                            Text("Fit")
-                        }
+                        Text(stringResource(R.string.display_fullscreen))
+                    }
+                    Button(
+                        onClick = { onDisplayModeChange(VideoDisplayMode.FIT) },
+                        enabled = settings.displayMode != VideoDisplayMode.FIT,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFF9500),
+                            contentColor = Color.White,
+                        ),
+                    ) {
+                        Text(stringResource(R.string.display_fit))
                     }
                 }
             }
 
-            // Ordner Sektion
-            SettingsSection(title = "Video-Ordner") {
+            SettingsSection(title = stringResource(R.string.video_folders)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = onPickFolder,
@@ -228,7 +223,7 @@ fun SettingsScreen(
                             contentColor = Color.White,
                         ),
                     ) {
-                        Text("Ordner hinzufügen")
+                        Text(stringResource(R.string.add_folder))
                     }
 
                     settings.folderUris.toList().forEach { uri ->
@@ -249,7 +244,7 @@ fun SettingsScreen(
                             IconButton(onClick = { onRemoveFolder(uri) }) {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = "Entfernen",
+                                    contentDescription = stringResource(R.string.remove),
                                     tint = Color(0xFFFF3B30),
                                 )
                             }
@@ -258,7 +253,6 @@ fun SettingsScreen(
                 }
             }
 
-            // Favoriten Button
             Button(
                 onClick = onOpenFavorites,
                 modifier = Modifier
@@ -269,7 +263,7 @@ fun SettingsScreen(
                     contentColor = Color.White,
                 ),
             ) {
-                Text("Favoriten anzeigen")
+                Text(stringResource(R.string.show_favorites))
             }
         }
     }

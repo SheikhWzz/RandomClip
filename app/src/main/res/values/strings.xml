@@ -1,4 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Clip-It</string>
+
+    <!-- General Settings -->
+    <string name="general_settings">General Settings</string>
+    <string name="app_settings">App Settings</string>
+    <string name="language">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_german">German</string>
+    <string name="language_arabic">Arabic</string>
+    <string name="back">Back</string>
+
+    <!-- Dashboard -->
+    <string name="start_playback">Start Playback</string>
+    <string name="general_settings_desc">General Settings</string>
+    <string name="video_settings_desc">Video Settings</string>
+    <string name="video_play_settings_desc">Video Playback Settings</string>
+    <string name="favorites">Favorites</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="clip_length">Clip Length</string>
+    <string name="clip_length_seconds">%d seconds</string>
+    <string name="playback_section">Playback</string>
+    <string name="enable_sound">Enable sound</string>
+    <string name="auto_advance">Auto-Advance</string>
+    <string name="anti_repeat">Anti-Repeat</string>
+    <string name="lock_portrait">Lock orientation (portrait)</string>
+    <string name="pause_on_lock">Pause when screen locks</string>
+    <string name="speed_section">Speed</string>
+    <string name="advanced">Advanced</string>
+    <string name="speed_format">%.1fx</string>
+    <string name="random_mode_section">Random Mode</string>
+    <string name="random_mode_desc">Random clip duration and speed</string>
+    <string name="display_section">Display</string>
+    <string name="display_fullscreen">Fullscreen</string>
+    <string name="display_fit">Fit</string>
+    <string name="video_folders">Video Folders</string>
+    <string name="add_folder">Add folder</string>
+    <string name="remove">Remove</string>
+    <string name="show_favorites">Show favorites</string>
+
+    <!-- Favorites -->
+    <string name="play_playlist">Play playlist</string>
+    <string name="no_favorites_yet">No favorites saved yet.</string>
+    <string name="delete">Delete</string>
+
+    <!-- Video Player -->
+    <string name="favorite">Favorite</string>
+    <string name="display_mode">Display mode</string>
+    <string name="random_mode">Random mode</string>
+    <string name="select_folder_hint">Select a folder in settings</string>
+    <string name="swipe_for_next">Swipe or skip for next clip</string>
+    <string name="orientation_landscape">Landscape</string>
+    <string name="orientation_portrait">Portrait</string>
+    <string name="aspect_ratio_separator"> · </string>
+
+    <!-- Status messages -->
+    <string name="favorite_removed">Favorite removed</string>
+    <string name="moment_saved">Moment saved!</string>
+    <string name="playlist_mode_exited">Playlist mode exited</string>
+    <string name="no_folders_selected">No folders selected</string>
+    <string name="scanning_videos">Scanning videos…</string>
+    <string name="no_videos_found">No videos found in folders</string>
+
+    <!-- SettingsSheet (legacy) -->
+    <string name="clip_length_label">Clip length: %ds</string>
+    <string name="sound">Sound</string>
+    <string name="speed_label">Speed: %s</string>
+    <string name="display_label">Display: %s</string>
+    <string name="avoid_repeats">Avoid repeats</string>
+    <string name="add">Add</string>
 </resources>

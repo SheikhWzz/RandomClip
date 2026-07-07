@@ -36,6 +36,7 @@ class SettingsRepository(private val context: Context) {
             avoidRepeats = prefs[KEY_AVOID_REPEATS] ?: true,
             pauseOnLock = prefs[KEY_PAUSE_ON_LOCK] ?: true,
             randomMode = prefs[KEY_RANDOM_MODE] ?: false,
+            language = prefs[KEY_LANGUAGE] ?: "en",
         )
     }
 
@@ -89,6 +90,10 @@ class SettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { it[KEY_RANDOM_MODE] = enabled }
     }
 
+    suspend fun setLanguage(languageCode: String) {
+        context.settingsDataStore.edit { it[KEY_LANGUAGE] = languageCode }
+    }
+
     companion object {
         private val KEY_CLIP_DURATION = intPreferencesKey("clip_duration_seconds")
         private val KEY_SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
@@ -100,5 +105,6 @@ class SettingsRepository(private val context: Context) {
         private val KEY_AVOID_REPEATS = booleanPreferencesKey("avoid_repeats")
         private val KEY_PAUSE_ON_LOCK = booleanPreferencesKey("pause_on_lock")
         private val KEY_RANDOM_MODE = booleanPreferencesKey("random_mode")
+        private val KEY_LANGUAGE = stringPreferencesKey("language")
     }
 }

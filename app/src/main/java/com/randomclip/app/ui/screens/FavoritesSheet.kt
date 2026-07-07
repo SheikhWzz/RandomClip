@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
 import coil.request.videoFrameMillis
+import com.randomclip.app.R
 import com.randomclip.app.model.FavoriteItem
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,30 +53,30 @@ fun FavoritesSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp)
+                .padding(bottom = 32.dp),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Favoriten",
+                    text = stringResource(R.string.favorites),
                     style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
+                    color = Color.White,
                 )
                 Button(
                     onClick = onStartPlaylist,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF9500),
-                        contentColor = Color.White
-                    )
+                        contentColor = Color.White,
+                    ),
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Playlist abspielen")
+                    Text(stringResource(R.string.play_playlist))
                 }
             }
 
@@ -83,11 +85,11 @@ fun FavoritesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "Noch keine Favoriten gespeichert.",
-                        color = Color(0xFF8A8A8A)
+                        text = stringResource(R.string.no_favorites_yet),
+                        color = Color(0xFF8A8A8A),
                     )
                 }
             } else {
@@ -96,13 +98,13 @@ fun FavoritesSheet(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(favorites) { favorite ->
                         FavoriteGridItem(
                             favorite = favorite,
                             onClick = { onFavoriteSelected(favorite) },
-                            onDelete = { onDeleteFavorite(favorite.id) }
+                            onDelete = { onDeleteFavorite(favorite.id) },
                         )
                     }
                 }
@@ -115,7 +117,7 @@ fun FavoritesSheet(
 fun FavoriteGridItem(
     favorite: FavoriteItem,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
 ) {
     val context = LocalContext.current
     val dateFormat = remember { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) }
@@ -126,9 +128,9 @@ fun FavoriteGridItem(
             .border(
                 width = 2.dp,
                 color = Color(0xFFFF9500),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
             )
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick),
     ) {
         AsyncImage(
             model = ImageRequest.Builder(context)
@@ -139,10 +141,9 @@ fun FavoriteGridItem(
                 .build(),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
         )
 
-        // Gradient overlay for text readability
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -150,13 +151,12 @@ fun FavoriteGridItem(
                     androidx.compose.ui.graphics.Brush.verticalGradient(
                         colors = listOf(
                             androidx.compose.ui.graphics.Color.Transparent,
-                            androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f)
-                        )
-                    )
-                )
+                            androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.7f),
+                        ),
+                    ),
+                ),
         )
 
-        // Video name
         Text(
             text = favorite.displayName,
             style = MaterialTheme.typography.bodySmall,
@@ -165,21 +165,20 @@ fun FavoriteGridItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(8.dp)
+                .padding(8.dp),
         )
 
-        // Delete button
         IconButton(
             onClick = onDelete,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(32.dp)
+                .size(32.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "Löschen",
+                contentDescription = stringResource(R.string.delete),
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         }
     }

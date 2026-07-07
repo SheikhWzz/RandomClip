@@ -9,7 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.randomclip.app.R
 import com.randomclip.app.model.AppSettings
 import com.randomclip.app.model.VideoDisplayMode
 import kotlin.math.roundToInt
@@ -45,19 +47,19 @@ fun SettingsSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 32.dp)
+            contentPadding = PaddingValues(bottom = 32.dp),
         ) {
             item {
                 Text(
-                    text = "Einstellungen",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
 
             item {
-                SettingRow(label = "Clip-Länge: ${settings.clipDurationSeconds}s") {
+                SettingRow(label = stringResource(R.string.clip_length_label, settings.clipDurationSeconds)) {
                     Slider(
                         value = settings.clipDurationSeconds.toFloat(),
                         onValueChange = { onClipDurationChange(it.roundToInt()) },
@@ -68,7 +70,7 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Ton") {
+                SettingRow(label = stringResource(R.string.sound)) {
                     Switch(
                         checked = settings.soundEnabled,
                         onCheckedChange = onSoundChange,
@@ -77,7 +79,7 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Auto-Advance") {
+                SettingRow(label = stringResource(R.string.auto_advance)) {
                     Switch(
                         checked = settings.autoAdvance,
                         onCheckedChange = onAutoAdvanceChange,
@@ -86,7 +88,12 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Geschwindigkeit: ${"%.1f".format(settings.playbackSpeed)}x") {
+                SettingRow(
+                    label = stringResource(
+                        R.string.speed_label,
+                        stringResource(R.string.speed_format, settings.playbackSpeed),
+                    ),
+                ) {
                     Slider(
                         value = settings.playbackSpeed,
                         onValueChange = onPlaybackSpeedChange,
@@ -97,7 +104,12 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Anzeige: ${displayModeLabel(settings.displayMode)}") {
+                SettingRow(
+                    label = stringResource(
+                        R.string.display_label,
+                        displayModeLabel(settings.displayMode),
+                    ),
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -107,21 +119,21 @@ fun SettingsSheet(
                             enabled = settings.displayMode != VideoDisplayMode.VERTICAL_FULLSCREEN,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Vollbild")
+                            Text(stringResource(R.string.display_fullscreen))
                         }
                         Button(
                             onClick = { onDisplayModeChange(VideoDisplayMode.FIT) },
                             enabled = settings.displayMode != VideoDisplayMode.FIT,
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text("Fit")
+                            Text(stringResource(R.string.display_fit))
                         }
                     }
                 }
             }
 
             item {
-                SettingRow(label = "Orientierung sperren (Hochformat)") {
+                SettingRow(label = stringResource(R.string.lock_portrait)) {
                     Switch(
                         checked = settings.lockPortrait,
                         onCheckedChange = onLockPortraitChange,
@@ -130,7 +142,7 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Wiederholungen vermeiden") {
+                SettingRow(label = stringResource(R.string.avoid_repeats)) {
                     Switch(
                         checked = settings.avoidRepeats,
                         onCheckedChange = onAvoidRepeatsChange,
@@ -139,7 +151,7 @@ fun SettingsSheet(
             }
 
             item {
-                SettingRow(label = "Bei Bildschirmsperre pausieren") {
+                SettingRow(label = stringResource(R.string.pause_on_lock)) {
                     Switch(
                         checked = settings.pauseOnLock,
                         onCheckedChange = onPauseOnLockChange,
@@ -152,14 +164,14 @@ fun SettingsSheet(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Video-Ordner",
-                        style = MaterialTheme.typography.titleMedium
+                        text = stringResource(R.string.video_folders),
+                        style = MaterialTheme.typography.titleMedium,
                     )
                     Button(onClick = onPickFolder) {
-                        Text("Hinzufügen")
+                        Text(stringResource(R.string.add))
                     }
                 }
             }
@@ -168,18 +180,18 @@ fun SettingsSheet(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = uri.substringAfterLast("%2F").substringAfterLast("/"),
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                     IconButton(onClick = { onRemoveFolder(uri) }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Entfernen",
-                            tint = MaterialTheme.colorScheme.error
+                            contentDescription = stringResource(R.string.remove),
+                            tint = MaterialTheme.colorScheme.error,
                         )
                     }
                 }
@@ -202,7 +214,7 @@ private fun SettingRow(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         content()
     }
