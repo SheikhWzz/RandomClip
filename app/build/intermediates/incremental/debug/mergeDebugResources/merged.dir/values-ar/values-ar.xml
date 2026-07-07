@@ -137,13 +137,47 @@
     <string name="favorite">إضافة للمفضلة</string>
     <string name="favorite_removed">تمت إزالة المفضلة</string>
     <string name="favorites">المفضلة</string>
+    <string name="game_back_to_menu">العودة لقائمة اللعبة</string>
+    <string name="game_display_auto">تلقائي</string>
+    <string name="game_flip_video_off_desc">يُشغَّل الفيديو بالاتجاه الطبيعي</string>
+    <string name="game_flip_video_on_desc">يُشغَّل الفيديو مقلوباً طوال اللعبة</string>
+    <string name="game_flip_video_toggle">قلب الفيديو رأساً على عقب</string>
+    <string name="game_hub_title">وضع اللعبة</string>
+    <string name="game_intro_go">Go!</string>
+    <string name="game_intro_ready">Ready</string>
+    <string name="game_landscape_mode_on_desc">اللعب بالوضع الأفقي</string>
+    <string name="game_landscape_mode_toggle">الوضع الأفقي</string>
+    <string name="game_meta_duration">المدة</string>
+    <string name="game_meta_orientation">الاتجاه</string>
+    <string name="game_meta_resolution">الدقة</string>
     <string name="game_mode_desc">تشغيل مقاطع التكرار من ملفات JSON</string>
     <string name="game_mode_hint">ضع VideoName.json في نفس مجلد VideoName.mp4</string>
     <string name="game_mode_json_not_found">وضع اللعبة مفعّل — لم يُعثر على JSON (VideoName.json بجانب الفيديو)</string>
-    <string name="game_mode_no_json_found">لم يُعثر على JSON (VideoName.json بجانب الفيديو)</string>
     <string name="game_mode_rep_counter">تكرار %1$d / %2$d</string>
     <string name="game_mode_section">وضع اللعبة</string>
-    <string name="game_mode_tap_hint">اضغط مع الاستمرار للتحريك — اترك للانتظار</string>
+    <string name="game_one_hand_mode_desc">وضع يد واحدة (عمودي، ثابت)</string>
+    <string name="game_orientation_horizontal">أفقي</string>
+    <string name="game_orientation_horizontal_desc">عرض الإطار كاملاً مع حواف سوداء</string>
+    <string name="game_orientation_toggle">تخطيط عمودي</string>
+    <string name="game_orientation_vertical">عمودي</string>
+    <string name="game_orientation_vertical_desc">ملء الشاشة عمودياً (قص الحواف)</string>
+    <string name="game_over_clicks">نقرات</string>
+    <string name="game_over_title">انتهى الفيديو</string>
+    <string name="game_preview_settings">الإعدادات</string>
+    <string name="game_preview_title">معاينة</string>
+    <string name="game_resolution_format">%1$d × %2$d</string>
+    <string name="game_score_format">النقاط %1$d</string>
+    <string name="game_segment_duration">مدة المقطع: %1$s</string>
+    <string name="game_segment_loop_off_desc">إنهاء اللعبة عند نهاية المقطع وعرض النتيجة</string>
+    <string name="game_segment_loop_on_desc">إعادة التشغيل من بداية المقطع عند الانتهاء</string>
+    <string name="game_segment_loop_toggle">تكرار المقطع</string>
+    <string name="game_segment_range_title">مقطع اللعبة</string>
+    <string name="game_settings_title">إعدادات اللعبة</string>
+    <string name="game_sound_off">بدون صوت</string>
+    <string name="game_sound_on">مع صوت</string>
+    <string name="game_sound_toggle">التشغيل مع الصوت</string>
+    <string name="game_start_play">تشغيل</string>
+    <string name="game_tap_video_to_start">اضغط على الفيديو للبدء</string>
     <string name="general_settings">الإعدادات العامة</string>
     <string name="general_settings_desc">الإعدادات العامة</string>
     <string msgid="6827826412747255547" name="in_progress">"قيد التقدم"</string>
@@ -153,6 +187,8 @@
     <string name="language_english">الإنجليزية</string>
     <string name="language_german">الألمانية</string>
     <string name="lock_portrait">قفل الاتجاه (عمودي)</string>
+    <string name="loop_clip">تكرار المقطع</string>
+    <string name="loop_clip_desc">إعادة المقطع الحالي حتى التمرير أو الخروج</string>
     <string msgid="2988463736136100848" name="m3c_bottom_sheet_collapse_description">"تصغير البطاقة السفلية"</string>
     <string msgid="1555567894577437024" name="m3c_bottom_sheet_dismiss_description">"إغلاق البطاقة السفلية"</string>
     <string msgid="8403354765404029791" name="m3c_bottom_sheet_drag_handle_description">"مقبض السحب"</string>

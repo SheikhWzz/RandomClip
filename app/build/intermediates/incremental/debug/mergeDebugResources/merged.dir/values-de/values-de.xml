@@ -129,13 +129,47 @@
     <string name="favorite">Favorisieren</string>
     <string name="favorite_removed">Favorit entfernt</string>
     <string name="favorites">Favoriten</string>
+    <string name="game_back_to_menu">Zurück zum Spielmenü</string>
+    <string name="game_display_auto">Auto</string>
+    <string name="game_flip_video_off_desc">Video wird normal ausgerichtet abgespielt</string>
+    <string name="game_flip_video_on_desc">Video wird im gesamten Spiel invertiert abgespielt</string>
+    <string name="game_flip_video_toggle">Video auf dem Kopf</string>
+    <string name="game_hub_title">Game Mode</string>
+    <string name="game_intro_go">Go!</string>
+    <string name="game_intro_ready">Ready</string>
+    <string name="game_landscape_mode_on_desc">Im Querformat spielen</string>
+    <string name="game_landscape_mode_toggle">Querformat</string>
+    <string name="game_meta_duration">Dauer</string>
+    <string name="game_meta_orientation">Ausrichtung</string>
+    <string name="game_meta_resolution">Auflösung</string>
     <string name="game_mode_desc">Rep-Segmente aus JSON-Dateien abspielen</string>
     <string name="game_mode_hint">VideoName.json im gleichen Ordner wie VideoName.mp4 ablegen</string>
     <string name="game_mode_json_not_found">Game Mode an — keine JSON gefunden (VideoName.json neben dem Video)</string>
-    <string name="game_mode_no_json_found">Keine JSON gefunden (VideoName.json neben dem Video)</string>
     <string name="game_mode_rep_counter">Rep %1$d / %2$d</string>
     <string name="game_mode_section">Game Mode</string>
-    <string name="game_mode_tap_hint">Gedrückt halten zum Bewegen — loslassen = Standby</string>
+    <string name="game_one_hand_mode_desc">Einhandmodus (Hochformat, fix)</string>
+    <string name="game_orientation_horizontal">Horizontal</string>
+    <string name="game_orientation_horizontal_desc">Ganzes Bild mit Letterboxing anzeigen</string>
+    <string name="game_orientation_toggle">Vertikales Layout</string>
+    <string name="game_orientation_vertical">Vertikal</string>
+    <string name="game_orientation_vertical_desc">Bildschirm vertikal füllen (Ränder abschneiden)</string>
+    <string name="game_over_clicks">Klicks</string>
+    <string name="game_over_title">Video vorbei</string>
+    <string name="game_preview_settings">Einstellungen</string>
+    <string name="game_preview_title">Vorschau</string>
+    <string name="game_resolution_format">%1$d × %2$d</string>
+    <string name="game_score_format">Punkte %1$d</string>
+    <string name="game_segment_duration">Schnittlänge: %1$s</string>
+    <string name="game_segment_loop_off_desc">Bei Segmentende Spiel beenden und Ergebnis zeigen</string>
+    <string name="game_segment_loop_on_desc">Am Segmentanfang neu starten wenn der Clip endet</string>
+    <string name="game_segment_loop_toggle">Segment wiederholen</string>
+    <string name="game_segment_range_title">Spiel-Abschnitt</string>
+    <string name="game_settings_title">Game-Einstellungen</string>
+    <string name="game_sound_off">Ohne Audio</string>
+    <string name="game_sound_on">Mit Audio</string>
+    <string name="game_sound_toggle">Mit Audio spielen</string>
+    <string name="game_start_play">Spielen</string>
+    <string name="game_tap_video_to_start">Tippe auf das Video zum Starten</string>
     <string name="general_settings">Allgemeine Einstellungen</string>
     <string name="general_settings_desc">Allgemeine Einstellungen</string>
     <string msgid="6827826412747255547" name="in_progress">"In Bearbeitung"</string>
@@ -145,6 +179,8 @@
     <string name="language_english">Englisch</string>
     <string name="language_german">Deutsch</string>
     <string name="lock_portrait">Orientierung sperren (Hochformat)</string>
+    <string name="loop_clip">Clip wiederholen</string>
+    <string name="loop_clip_desc">Aktuellen Clip wiederholen bis du scrollst oder gehst</string>
     <string msgid="2988463736136100848" name="m3c_bottom_sheet_collapse_description">"Ansicht am unteren Rand minimieren"</string>
     <string msgid="1555567894577437024" name="m3c_bottom_sheet_dismiss_description">"Ansicht am unteren Rand schließen"</string>
     <string msgid="8403354765404029791" name="m3c_bottom_sheet_drag_handle_description">"Ziehpunkt"</string>

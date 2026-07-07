@@ -159,8 +159,8 @@ private fun LanguageOption(
                         )
                     },
                     onClick = {
-                        onLanguageChange(langCode)
                         expanded = false
+                        onLanguageChange(langCode)
                     },
                     modifier = Modifier.background(
                         if (langCode == selectedLanguage) Color(0xFFFF9500).copy(alpha = 0.2f)

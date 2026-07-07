@@ -2,6 +2,7 @@ package com.randomclip.app
 
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -23,12 +24,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.randomclip.app.ui.GameIntroPhase
+import com.randomclip.app.ui.GameModeScreen
 import com.randomclip.app.ui.GameModeViewModel
+import com.randomclip.app.ui.components.SegmentDragHandle
+import com.randomclip.app.ui.game.GameOrientationResolver
 import com.randomclip.app.ui.RandomClipViewModel
 import com.randomclip.app.ui.Screen
 import com.randomclip.app.ui.screens.DashboardScreen
 import com.randomclip.app.ui.screens.FavoritesSheet
+import com.randomclip.app.ui.screens.GameHubScreen
 import com.randomclip.app.ui.screens.GameModePlayerScreen
+import com.randomclip.app.ui.screens.GameSettingsScreen
+import com.randomclip.app.ui.screens.GameVideoPreviewScreen
 import com.randomclip.app.ui.screens.GeneralSettingsScreen
 import com.randomclip.app.ui.screens.SettingsScreen
 import com.randomclip.app.ui.screens.VideoPlayerScreen
@@ -38,6 +46,37 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: RandomClipViewModel by viewModels()
     private val gameModeViewModel: GameModeViewModel by viewModels()
+    private var frozenOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+    private fun refreshFrozenOrientation() {
+        frozenOrientation = GameOrientationResolver.orientationFromConfiguration(
+            configuration = resources.configuration,
+            displayRotation = display?.rotation,
+        )
+    }
+
+    private fun applyGameFlowOrientation() {
+        val state = gameModeViewModel.uiState.value
+        if (!state.isInGameFlow) return
+        requestedOrientation = GameOrientationResolver.resolveForGameFlow(
+            context = this,
+            screen = state.screen,
+            landscapeGameEnabled = state.landscapeGameEnabled,
+            frozenOrientation = frozenOrientation,
+        )
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        refreshFrozenOrientation()
+        applyGameFlowOrientation()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshFrozenOrientation()
+        applyGameFlowOrientation()
+    }
 
     private val folderPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree(),
@@ -53,6 +92,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        refreshFrozenOrientation()
         enableEdgeToEdge()
 
         setContent {
@@ -67,9 +107,30 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            LaunchedEffect(gameModeState.isActive) {
+            LaunchedEffect(
+                gameModeState.isInGameFlow,
+                gameModeState.screen,
+                gameModeState.landscapeGameEnabled,
+                uiState.settings.lockPortrait,
+            ) {
+                refreshFrozenOrientation()
+                requestedOrientation = if (gameModeState.isInGameFlow) {
+                    GameOrientationResolver.resolveForGameFlow(
+                        context = this@MainActivity,
+                        screen = gameModeState.screen,
+                        landscapeGameEnabled = gameModeState.landscapeGameEnabled,
+                        frozenOrientation = frozenOrientation,
+                    )
+                } else {
+                    GameOrientationResolver.resolveForNormalApp(
+                        lockPortrait = uiState.settings.lockPortrait,
+                    )
+                }
+            }
+
+            LaunchedEffect(gameModeState.screen) {
                 val controller = WindowCompat.getInsetsController(window, window.decorView)
-                if (gameModeState.isActive) {
+                if (gameModeState.screen == GameModeScreen.PLAYING) {
                     controller.hide(WindowInsetsCompat.Type.systemBars())
                     controller.systemBarsBehavior =
                         WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -78,18 +139,9 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            LaunchedEffect(uiState.settings.lockPortrait, gameModeState.isActive) {
-                if (gameModeState.isActive) return@LaunchedEffect
-                requestedOrientation = if (uiState.settings.lockPortrait) {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                } else {
-                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                }
-            }
-
-            DisposableEffect(lifecycleOwner, gameModeState.isActive) {
+            DisposableEffect(lifecycleOwner, gameModeState.isInGameFlow) {
                 val observer = LifecycleEventObserver { _, event ->
-                    if (gameModeState.isActive) return@LifecycleEventObserver
+                    if (gameModeState.isInGameFlow) return@LifecycleEventObserver
                     if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
                         if (uiState.settings.pauseOnLock) {
                             viewModel.playerManager.pause()
@@ -102,12 +154,28 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            BackHandler(enabled = gameModeState.isActive) {
-                gameModeViewModel.exit()
+            BackHandler(enabled = gameModeState.screen == GameModeScreen.PLAYING) {
+                if (gameModeState.introPhase == GameIntroPhase.GAME_OVER) {
+                    gameModeViewModel.finishGameAndReturnToHub()
+                } else {
+                    gameModeViewModel.closeGameFlow()
+                }
+            }
+
+            BackHandler(enabled = gameModeState.screen == GameModeScreen.PREVIEW) {
+                gameModeViewModel.backToHub()
+            }
+
+            BackHandler(enabled = gameModeState.screen == GameModeScreen.SETTINGS) {
+                gameModeViewModel.backToHub()
+            }
+
+            BackHandler(enabled = gameModeState.screen == GameModeScreen.HUB) {
+                gameModeViewModel.closeGameFlow()
             }
 
             BackHandler(
-                enabled = !gameModeState.isActive && uiState.currentScreen != Screen.DASHBOARD,
+                enabled = !gameModeState.isInGameFlow && uiState.currentScreen != Screen.DASHBOARD,
             ) {
                 when (uiState.currentScreen) {
                     Screen.PLAYER -> {
@@ -121,21 +189,68 @@ class MainActivity : AppCompatActivity() {
             }
 
             RandomClipTheme {
-                if (gameModeState.isActive) {
-                    GameModePlayerScreen(
+                when (gameModeState.screen) {
+                    GameModeScreen.PLAYING -> GameModePlayerScreen(
                         uiState = gameModeState,
                         player = gameModeViewModel.player,
-                        onTap = { gameModeViewModel.onTap() },
-                        onExit = { gameModeViewModel.exit() },
+                        onTap = { x, y, fingers -> gameModeViewModel.onTap(x, y, fingers) },
+                        onBackToMenu = { gameModeViewModel.finishGameAndReturnToHub() },
                     )
-                } else {
-                    when (uiState.currentScreen) {
+                    GameModeScreen.PREVIEW -> {
+                        val video = gameModeState.selectedVideo
+                        if (video != null) {
+                            GameVideoPreviewScreen(
+                                video = video,
+                                displayMode = gameModeState.videoDisplayMode,
+                                soundEnabled = gameModeState.soundEnabled,
+                                videoFlipped = gameModeState.videoFlipped,
+                                landscapeGameEnabled = gameModeState.landscapeGameEnabled,
+                                segmentLoopEnabled = gameModeState.segmentLoopEnabled,
+                                segmentStartMs = gameModeState.segmentStartMs,
+                                segmentEndMs = gameModeState.segmentEndMs,
+                                player = gameModeViewModel.player,
+                                onBack = { gameModeViewModel.backToHub() },
+                                onToggleLandscapeGame = { gameModeViewModel.toggleLandscapeGame() },
+                                onToggleSegmentLoop = { gameModeViewModel.toggleSegmentLoop() },
+                                onToggleSound = { gameModeViewModel.togglePreviewSound() },
+                                onToggleVideoFlipped = { gameModeViewModel.toggleVideoFlipped() },
+                                onSegmentStartChange = { ms, dragging ->
+                                    gameModeViewModel.onSegmentHandleChange(
+                                        SegmentDragHandle.START,
+                                        ms,
+                                        dragging,
+                                    )
+                                },
+                                onSegmentEndChange = { ms, dragging ->
+                                    gameModeViewModel.onSegmentHandleChange(
+                                        SegmentDragHandle.END,
+                                        ms,
+                                        dragging,
+                                    )
+                                },
+                                onStartGame = { gameModeViewModel.startGameFromPreview() },
+                            )
+                        }
+                    }
+                    GameModeScreen.SETTINGS -> GameSettingsScreen(
+                        soundEnabled = gameModeState.soundEnabled,
+                        onSoundChange = { gameModeViewModel.setGlobalSoundEnabled(it) },
+                        onBack = { gameModeViewModel.backToHub() },
+                    )
+                    GameModeScreen.HUB -> GameHubScreen(
+                        videos = gameModeState.videos,
+                        isLoading = gameModeState.isLoading,
+                        onBack = { gameModeViewModel.closeGameFlow() },
+                        onOpenSettings = { gameModeViewModel.openSettings() },
+                        onVideoSelected = { gameModeViewModel.selectVideo(it) },
+                    )
+                    GameModeScreen.NONE -> when (uiState.currentScreen) {
                         Screen.DASHBOARD -> DashboardScreen(
                             onStartPlayback = {
                                 viewModel.navigateTo(Screen.PLAYER)
                                 viewModel.skipToNext()
                             },
-                            onStartGameMode = { gameModeViewModel.start() },
+                            onStartGameMode = { gameModeViewModel.openHub() },
                             onOpenSettings = { viewModel.navigateTo(Screen.SETTINGS) },
                             onOpenGeneralSettings = { viewModel.navigateTo(Screen.GENERAL_SETTINGS) },
                             onOpenFavorites = { viewModel.navigateTo(Screen.FAVORITES) },
@@ -152,6 +267,7 @@ class MainActivity : AppCompatActivity() {
                             onToggleRandomMode = {
                                 viewModel.updateRandomMode(!uiState.settings.randomMode)
                             },
+                            onToggleLoopClip = { viewModel.toggleLoopClip() },
                             onBack = {
                                 if (uiState.isFavoritesPlaylistMode) {
                                     viewModel.exitPlaylistMode()
@@ -174,6 +290,7 @@ class MainActivity : AppCompatActivity() {
                             onAvoidRepeatsChange = viewModel::updateAvoidRepeats,
                             onPauseOnLockChange = viewModel::updatePauseOnLock,
                             onRandomModeChange = viewModel::updateRandomMode,
+                            onLoopClipChange = viewModel::updateLoopClip,
                             onOpenFavorites = { viewModel.navigateTo(Screen.FAVORITES) },
                         )
                         Screen.FAVORITES -> FavoritesSheet(
@@ -192,7 +309,6 @@ class MainActivity : AppCompatActivity() {
                                 AppCompatDelegate.setApplicationLocales(
                                     LocaleListCompat.forLanguageTags(languageCode),
                                 )
-                                recreate()
                             },
                             onBack = { viewModel.navigateBack() },
                         )

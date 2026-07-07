@@ -62,5 +62,6 @@ data class AppSettings(
     val avoidRepeats: Boolean = true,
     val pauseOnLock: Boolean = true,
     val randomMode: Boolean = false,
+    val loopClip: Boolean = false,
     val language: String = "en",
 )

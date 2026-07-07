@@ -64,8 +64,8 @@
 36-->/home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:19:9-29:20
 37            android:name="com.randomclip.app.MainActivity"
 37-->/home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:20:13-41
-38            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-38-->/home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:21:13-87
+38            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
+38-->/home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:21:13-106
 39            android:exported="true"
 39-->/home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:22:13-36
 40            android:screenOrientation="unspecified"

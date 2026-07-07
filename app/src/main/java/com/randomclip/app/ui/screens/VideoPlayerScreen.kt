@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -40,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,6 +80,7 @@ fun VideoPlayerScreen(
     onOpenSettings: () -> Unit,
     onToggleDisplayMode: () -> Unit,
     onToggleRandomMode: () -> Unit,
+    onToggleLoopClip: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -243,14 +246,17 @@ fun VideoPlayerScreen(
 
         if (uiState.currentClip != null) {
             ActionRail(
+                clipKey = uiState.currentClip?.let { "${it.video.uri}-${it.startPositionMs}" },
                 onFavorite = onFavorite,
                 onOpenSettings = onOpenSettings,
                 onBack = onBack,
                 onToggleDisplayMode = onToggleDisplayMode,
                 onToggleRandomMode = onToggleRandomMode,
+                onToggleLoopClip = onToggleLoopClip,
                 isFavorite = uiState.isFavorite,
                 displayMode = uiState.settings.displayMode,
                 randomMode = uiState.settings.randomMode,
+                loopClipActive = uiState.loopClipActive,
                 modifier = Modifier.align(Alignment.CenterStart),
             )
         }
@@ -296,14 +302,17 @@ fun VideoPlayerScreen(
 
 @Composable
 private fun ActionRail(
+    clipKey: String?,
     onFavorite: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleDisplayMode: () -> Unit,
     onToggleRandomMode: () -> Unit,
+    onToggleLoopClip: () -> Unit,
     onBack: () -> Unit,
     isFavorite: Boolean,
     displayMode: VideoDisplayMode,
     randomMode: Boolean,
+    loopClipActive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -312,11 +321,13 @@ private fun ActionRail(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        FavoriteRailButton(
-            onClick = onFavorite,
-            isFavorite = isFavorite,
-            contentDescription = stringResource(R.string.favorite),
-        )
+        key(clipKey ?: "no-clip") {
+            FavoriteRailButton(
+                onClick = onFavorite,
+                isFavorite = isFavorite,
+                contentDescription = stringResource(R.string.favorite),
+            )
+        }
 
         ActionRailButton(
             onClick = onToggleDisplayMode,
@@ -342,6 +353,13 @@ private fun ActionRail(
         )
 
         ActionRailButton(
+            onClick = onToggleLoopClip,
+            icon = Icons.Default.Repeat,
+            contentDescription = stringResource(R.string.loop_clip),
+            isFilled = loopClipActive,
+        )
+
+        ActionRailButton(
             onClick = onBack,
             icon = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = stringResource(R.string.back),
@@ -359,7 +377,9 @@ private fun FavoriteRailButton(
     var bounceTarget by remember { mutableFloatStateOf(1f) }
 
     LaunchedEffect(isFavorite) {
-        bounceTarget = 1.3f
+        if (isFavorite) {
+            bounceTarget = 1.3f
+        }
     }
 
     val scale by animateFloatAsState(

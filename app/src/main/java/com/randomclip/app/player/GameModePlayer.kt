@@ -25,29 +25,35 @@ class GameModePlayer(context: Context) {
         playbackParameters = PlaybackParameters(DEFAULT_SPEED, 1f)
     }
 
-    fun load(uri: Uri) {
+    val speedController = PlaybackSpeedController(exoPlayer)
+
+    fun load(uri: Uri, startMs: Long = 0L) {
         if (released) return
+        speedController.reset()
         exoPlayer.stop()
         exoPlayer.setMediaItem(MediaItem.fromUri(uri))
         exoPlayer.prepare()
+        if (startMs > 0) {
+            exoPlayer.seekTo(startMs)
+        }
         exoPlayer.playbackParameters = PlaybackParameters(DEFAULT_SPEED, 1f)
         exoPlayer.pause()
     }
 
-    fun applySpeed(speed: Float) {
+    fun applySpeed(speed: Float, muted: Boolean) {
         if (released) return
+        speedController.applySpeed(speed, muted)
+    }
 
-        // Media3 requires speed > 0 — use pause() for "standby", never PlaybackParameters(0f).
-        if (speed <= MIN_MOVING_SPEED) {
-            exoPlayer.pause()
-            return
-        }
+    fun setMuted(muted: Boolean) {
+        if (released) return
+        exoPlayer.volume = if (muted) 0f else 1f
+    }
 
-        val clamped = speed.coerceIn(MIN_MOVING_SPEED, MAX_PLAYBACK_SPEED)
-        exoPlayer.playbackParameters = PlaybackParameters(clamped, 1f)
-        if (!exoPlayer.isPlaying) {
-            exoPlayer.play()
-        }
+    fun playSegmentLoop(startMs: Long, endMs: Long) {
+        if (released) return
+        exoPlayer.seekTo(startMs)
+        exoPlayer.play()
     }
 
     fun pause() {
@@ -58,6 +64,7 @@ class GameModePlayer(context: Context) {
     fun release() {
         if (released) return
         released = true
+        speedController.reset()
         exoPlayer.release()
     }
 
