@@ -17,6 +17,9 @@
     <string name="video_settings_desc">Video-Einstellungen</string>
     <string name="video_play_settings_desc">Video-Wiedergabe-Einstellungen</string>
     <string name="favorites">Favoriten</string>
+    <string name="start_game_mode">Game Mode</string>
+    <string name="game_mode_no_json_found">Keine JSON gefunden (VideoName.json neben dem Video)</string>
+    <string name="game_mode_tap_hint">Gedrückt halten zum Bewegen — loslassen = Standby</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Einstellungen</string>
@@ -33,6 +36,11 @@
     <string name="speed_format">%.1fx</string>
     <string name="random_mode_section">Zufallsmodus</string>
     <string name="random_mode_desc">Zufällige Clip-Dauer und Geschwindigkeit</string>
+    <string name="game_mode_section">Game Mode</string>
+    <string name="game_mode_desc">Rep-Segmente aus JSON-Dateien abspielen</string>
+    <string name="game_mode_rep_counter">Rep %1$d / %2$d</string>
+    <string name="game_mode_json_not_found">Game Mode an — keine JSON gefunden (VideoName.json neben dem Video)</string>
+    <string name="game_mode_hint">VideoName.json im gleichen Ordner wie VideoName.mp4 ablegen</string>
     <string name="display_section">Anzeige</string>
     <string name="display_fullscreen">Vollbild</string>
     <string name="display_fit">Fit</string>

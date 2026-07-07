@@ -17,6 +17,9 @@
     <string name="video_settings_desc">Video Settings</string>
     <string name="video_play_settings_desc">Video Playback Settings</string>
     <string name="favorites">Favorites</string>
+    <string name="start_game_mode">Game Mode</string>
+    <string name="game_mode_no_json_found">No JSON found (VideoName.json next to video)</string>
+    <string name="game_mode_tap_hint">Hold to move — release for standby</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
@@ -33,6 +36,11 @@
     <string name="speed_format">%.1fx</string>
     <string name="random_mode_section">Random Mode</string>
     <string name="random_mode_desc">Random clip duration and speed</string>
+    <string name="game_mode_section">Game Mode</string>
+    <string name="game_mode_desc">Play rep segments from sidecar JSON files</string>
+    <string name="game_mode_rep_counter">Rep %1$d / %2$d</string>
+    <string name="game_mode_json_not_found">Game Mode on — no JSON found (VideoName.json next to video)</string>
+    <string name="game_mode_hint">Place VideoName.json in the same folder as VideoName.mp4</string>
     <string name="display_section">Display</string>
     <string name="display_fullscreen">Fullscreen</string>
     <string name="display_fit">Fit</string>

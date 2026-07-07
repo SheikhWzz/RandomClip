@@ -643,6 +643,13 @@
     <string name="favorite">Favorite</string>
     <string name="favorite_removed">Favorite removed</string>
     <string name="favorites">Favorites</string>
+    <string name="game_mode_desc">Play rep segments from sidecar JSON files</string>
+    <string name="game_mode_hint">Place VideoName.json in the same folder as VideoName.mp4</string>
+    <string name="game_mode_json_not_found">Game Mode on — no JSON found (VideoName.json next to video)</string>
+    <string name="game_mode_no_json_found">No JSON found (VideoName.json next to video)</string>
+    <string name="game_mode_rep_counter">Rep %1$d / %2$d</string>
+    <string name="game_mode_section">Game Mode</string>
+    <string name="game_mode_tap_hint">Hold to move — release for standby</string>
     <string name="general_settings">General Settings</string>
     <string name="general_settings_desc">General Settings</string>
     <string name="in_progress">In progress</string>
@@ -741,6 +748,7 @@
     <string name="speed_format">%.1fx</string>
     <string name="speed_label">Speed: %s</string>
     <string name="speed_section">Speed</string>
+    <string name="start_game_mode">Game Mode</string>
     <string name="start_playback">Start Playback</string>
     <string name="state_empty">Empty</string>
     <string name="state_off">Off</string>

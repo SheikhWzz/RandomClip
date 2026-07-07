@@ -17,6 +17,9 @@
     <string name="video_settings_desc">إعدادات الفيديو</string>
     <string name="video_play_settings_desc">إعدادات تشغيل الفيديو</string>
     <string name="favorites">المفضلة</string>
+    <string name="start_game_mode">وضع اللعبة</string>
+    <string name="game_mode_no_json_found">لم يُعثر على JSON (VideoName.json بجانب الفيديو)</string>
+    <string name="game_mode_tap_hint">اضغط مع الاستمرار للتحريك — اترك للانتظار</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">الإعدادات</string>
@@ -33,6 +36,11 @@
     <string name="speed_format">%.1fx</string>
     <string name="random_mode_section">الوضع العشوائي</string>
     <string name="random_mode_desc">مدة وسرعة عشوائية للمقطع</string>
+    <string name="game_mode_section">وضع اللعبة</string>
+    <string name="game_mode_desc">تشغيل مقاطع التكرار من ملفات JSON</string>
+    <string name="game_mode_rep_counter">تكرار %1$d / %2$d</string>
+    <string name="game_mode_json_not_found">وضع اللعبة مفعّل — لم يُعثر على JSON (VideoName.json بجانب الفيديو)</string>
+    <string name="game_mode_hint">ضع VideoName.json في نفس مجلد VideoName.mp4</string>
     <string name="display_section">العرض</string>
     <string name="display_fullscreen">ملء الشاشة</string>
     <string name="display_fit">ملائمة</string>

@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-30:12
-INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-30:12
-INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-30:12
-INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-30:12
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-31:12
+INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-31:12
+INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-31:12
+INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:2:1-31:12
 MERGED from [io.coil-kt:coil-video:2.6.0] /home/abdul/.gradle/caches/9.6.0/transforms/88218d77131f7afb8b860fc4d90aa198/transformed/coil-video-2.6.0/AndroidManifest.xml:2:1-7:12
 MERGED from [io.coil-kt:coil-compose:2.6.0] /home/abdul/.gradle/caches/9.6.0/transforms/17877558839bb6c93f3005058b32d46f/transformed/coil-compose-2.6.0/AndroidManifest.xml:2:1-7:12
 MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/abdul/.gradle/caches/9.6.0/transforms/ad4da0a956bf24d52db7536a4f51f91f/transformed/coil-compose-base-2.6.0/AndroidManifest.xml:2:1-7:12
@@ -102,15 +102,19 @@ uses-permission#android.permission.READ_MEDIA_VIDEO
 ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:4:5-75
 	android:name
 		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:4:22-72
-uses-permission#android.permission.READ_EXTERNAL_STORAGE
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:5:5-7:38
-	android:maxSdkVersion
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:7:9-35
+uses-permission#android.permission.VIBRATE
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:5:5-66
 	android:name
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:6:9-64
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:5:22-63
+uses-permission#android.permission.READ_EXTERNAL_STORAGE
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:6:5-8:38
+	android:maxSdkVersion
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:8:9-35
+	android:name
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:7:9-64
 application
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:9:5-29:19
-INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:9:5-29:19
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:10:5-30:19
+INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:10:5-30:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] /home/abdul/.gradle/caches/9.6.0/transforms/24cfa412a438b3f3c55369cb9a8ebcd2/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.6] /home/abdul/.gradle/caches/9.6.0/transforms/24cfa412a438b3f3c55369cb9a8ebcd2/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.lifecycle:lifecycle-process:2.8.7] /home/abdul/.gradle/caches/9.6.0/transforms/b61e726c9d4b308a8bd6b35417149fa4/transformed/lifecycle-process-2.8.7/AndroidManifest.xml:23:5-33:19
@@ -130,43 +134,43 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/abdul
 	android:extractNativeLibs
 		INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml
 	android:localeConfig
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:14:9-51
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:15:9-51
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.15.0] /home/abdul/.gradle/caches/9.6.0/transforms/4209fbd659a8ae25df25ad921ed7ffe2/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:15:9-35
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:16:9-35
 	android:label
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:13:9-41
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:14:9-41
 	android:icon
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:12:9-43
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:13:9-43
 	android:allowBackup
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:11:9-35
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:12:9-35
 	android:theme
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:16:9-48
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:17:9-48
 	android:name
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:10:9-46
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:11:9-46
 activity#com.randomclip.app.MainActivity
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:18:9-28:20
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:19:9-29:20
 	android:screenOrientation
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:22:13-52
-	android:exported
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:21:13-36
-	android:configChanges
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:20:13-87
-	android:theme
 		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:23:13-52
+	android:exported
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:22:13-36
+	android:configChanges
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:21:13-87
+	android:theme
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:24:13-52
 	android:name
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:19:13-41
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:20:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:24:13-27:29
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:25:13-28:29
 action#android.intent.action.MAIN
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:25:17-69
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:26:17-69
 	android:name
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:25:25-66
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:26:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:26:17-77
+ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:27:17-77
 	android:name
-		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:26:27-74
+		ADDED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml:27:27-74
 uses-sdk
 INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/abdul/RiderProjects/Clip-It/app/src/main/AndroidManifest.xml

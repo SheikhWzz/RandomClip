@@ -22,9 +22,11 @@ Files are written to `tools/pose-analyzer/output/<videoname>.json`.
 ## Requirements
 
 - Python 3.10+
-- Dependencies: `mediapipe`, `opencv-python`, `numpy`, `scipy`
+- Dependencies: `mediapipe`, `opencv-python-headless`, `numpy`, `scipy`
 
 ## Setup
+
+### Linux / macOS (normal)
 
 ```bash
 cd /home/abdul/RiderProjects/Clip-It/tools/pose-analyzer
@@ -35,6 +37,35 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+### NixOS (recommended)
+
+On NixOS, a plain `venv` often fails with `libstdc++.so.6` / NumPy import errors.
+Use the provided Nix shell instead:
+
+```bash
+cd /home/abdul/RiderProjects/Clip-It/tools/pose-analyzer
+
+# One-time: remove broken venv if you created one outside nix-shell
+rm -rf venv
+
+nix-shell shell.nix
+```
+
+Inside the shell:
+
+```bash
+python analyze_video.py --input /path/to/video.mp4 --landmark LEFT_WRIST --debug
+```
+
+Or without entering the shell:
+
+```bash
+chmod +x run.sh
+./run.sh --input /path/to/video.mp4 --landmark LEFT_WRIST --debug
+```
+
+The Nix shell creates `.venv-nix/` with working native libraries (`gcc` stdlib in `LD_LIBRARY_PATH`).
 
 ## Usage
 
@@ -102,9 +133,26 @@ This writes:
 ## Tips
 
 - **Squats / lunges**: try `LEFT_KNEE` or `RIGHT_KNEE`, `--rep-boundary valley`
+- **Bicep curls / upper body**: try `LEFT_WRIST` or `RIGHT_WRIST`, not `LEFT_KNEE`
 - **Pull-ups / overhead press**: try `RIGHT_SHOULDER` or `LEFT_WRIST`
 - If reps are over-counted, increase `--min-rep-duration-ms`
 - Use `--debug` to validate JSON before importing into Clip-It
+
+## Troubleshooting
+
+### `libxcb.so.1` / `libstdc++.so.6` (NixOS)
+
+Your venv was created without Nix runtime libraries. Fix:
+
+```bash
+rm -rf venv .venv-nix
+nix-shell shell.nix
+pip uninstall -y opencv-python opencv-python-headless 2>/dev/null || true
+pip install -r requirements.txt
+python analyze_video.py --input /path/to/video.mp4 --debug
+```
+
+We use `opencv-python-headless` (no GUI/X11) for CLI video processing on NixOS.
 
 ## Branch
 

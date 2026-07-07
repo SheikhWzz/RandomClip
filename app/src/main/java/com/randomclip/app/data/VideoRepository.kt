@@ -116,6 +116,22 @@ class VideoRepository(
         return ClipSelection(video = video, startPositionMs = startMs)
     }
 
+    fun pickRandomVideo(
+        videos: List<VideoItem>,
+        excludeUris: List<Uri> = emptyList(),
+    ): VideoItem? {
+        if (videos.isEmpty()) return null
+
+        val excludeSet = excludeUris.toSet()
+        val pool = if (excludeSet.isNotEmpty() && videos.size > excludeSet.size) {
+            videos.filter { it.uri !in excludeSet }
+        } else {
+            videos
+        }
+
+        return pool.random()
+    }
+
     private fun VideoEntity.toVideoItem() = VideoItem(
         uri = Uri.parse(uri),
         displayName = displayName,

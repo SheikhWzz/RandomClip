@@ -1297,6 +1297,13 @@ string exo_track_unknown_name
 string favorite
 string favorite_removed
 string favorites
+string game_mode_desc
+string game_mode_hint
+string game_mode_json_not_found
+string game_mode_no_json_found
+string game_mode_rep_counter
+string game_mode_section
+string game_mode_tap_hint
 string general_settings
 string general_settings_desc
 string in_progress
@@ -1391,6 +1398,7 @@ string sound
 string speed_format
 string speed_label
 string speed_section
+string start_game_mode
 string start_playback
 string state_empty
 string state_off
